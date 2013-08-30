@@ -4,12 +4,21 @@ using BinDeps
 
 nettle = library_dependency("nettle", aliases = ["libnettle"])
 
+@windows_only begin
+  Pkg.installed("RPMmd") === nothing && Pkg.add("RPMmd")
+  using RPMmd
+  provides(RPMmd.RPM, "libnettle", nettle, os = :Windows )
+end
+
 @osx_only begin
   Pkg.installed("Homebrew") === nothing && Pkg.add("Homebrew")
   using Homebrew
 
   provides( Homebrew.HB, "nettle", nettle, os = :Darwin )
 end
+
+provides( AptGet, "libnettle4", nettle )
+provides( Yum, "nettle", nettle )
 
 julia_usrdir = normpath(JULIA_HOME*"/../") # This is a stopgap, we need a better builtin solution to get the included libraries
 libdirs = String["$(julia_usrdir)/lib"]
