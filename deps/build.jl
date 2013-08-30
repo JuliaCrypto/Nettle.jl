@@ -2,7 +2,7 @@ using BinDeps
 
 @BinDeps.setup
 
-nettle = library_dependency("nettle", aliases = ["libnettle"])
+nettle = library_dependency("nettle", aliases = ["libnettle","libnettle-4-6"])
 
 @windows_only begin
   Pkg.installed("RPMmd") === nothing && Pkg.add("RPMmd")
