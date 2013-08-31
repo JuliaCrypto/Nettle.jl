@@ -26,9 +26,23 @@ Outputs:
 Hashing Functionality
 =====================
 
-`libnettle` supports a wide array of hashing algorithms.  This package interrogates `libnettle` at startup to determine the available hash types, which are then available in `Nettle.HashAlgorithms`.  Typically these include `SHA1`, `SHA256`, `SHA384`, `SHA512`, `SHA3_256`, `SHA3_512`, `MD2`, `MD5` and `RIPEMD160`.  The Hashing algorithms are also exported by `Nettle`, so you may access them with just `SHA256`, for example.
+`libnettle` supports a wide array of hashing algorithms.  This package interrogates `libnettle` at startup to determine the available hash types, which are then available in `Nettle.HashAlgorithms`.  Typically these include `SHA1`, `SHA224`, `SHA256`, `SHA384`, `SHA512`, `MD2`, `MD5` and `RIPEMD160`.  The Hashing algorithms are also individually exported by `Nettle`, so you may access them with just `SHA256`, for example.
 
-Typical usage of these hash algoritms is to 
+Typical usage of these hash algoritms is to create a `HashState`, `update!` it, and finally get a `digest`:
+
+```julia
+h = HashState(SHA256)
+update!(h, "this is a test")
+hexdigest!(h)
+```
+
+Outputs:
+
+```
+2e99758548972a8e8822ad47fa1017ff72f06f3ff6a016851f45c398732bc50c
+```
+
+A `digest!` function is also available to return the digest as an `Array(Uint8,1)`.  Note that both the `digest!` function and the `hexdigest!` function reset the internal `HashState` object to a pristine state, ready for further `update!` calls.
 
 
 HMAC Functionality
@@ -37,7 +51,14 @@ HMAC Functionality
 
 ```julia
 h = HMACState(SHA256, "mykey")
+update!(h, "this is a test")
+hexdigest!(h)
 ```
 
-Valid 
+Outputs:
 
+```
+"ca1dcafe1b5fb329256248196c0f92a95fbe3788db6c5cb0775b4106db437ba2"
+```
+
+A `digest!` function is also available to return the digest as an `Array(Uint8,1)`.  Note that both the `digest!` function and the `hexdigest!` function reset the internal `HMACState` object to a pristine state, ready for further `update!` calls.
