@@ -16,13 +16,6 @@ function show{T<:HashAlgorithm}( io::IO, ::HMACState{T} )
   write(io, "$(string(T)) HMAC state")
 end
 
-# Precompile all our "hash_type" functions
-for T in (MD5,MD2,RIPEMD160,SHA1,SHA256,SHA384,SHA512)
-  @eval function hash_type(::Type{$T})
-    cglobal(($(string("nettle_",lowercase(string(T)))),nettle))
-  end
-end
-
 function HMACState{T<:HashAlgorithm}(::Type{T},key )
   outer = Array(Uint8,ctx_size(T))
   inner = Array(Uint8,ctx_size(T))
@@ -41,4 +34,3 @@ function digest!{T<:HashAlgorithm}(state::HMACState{T})
   ccall((:nettle_hmac_digest,nettle),Void,(Ptr{Void},Ptr{Void},Ptr{Void},Ptr{Void},Csize_t,Ptr{Uint8}),state.outer,state.inner,state.state,hash_type(T),sizeof(dgst),dgst)
   dgst
 end
-
