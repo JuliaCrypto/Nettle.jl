@@ -2,10 +2,13 @@
 ## As usual, check out http://www.lysator.liu.se/~nisse/nettle/nettle.html#Hash-functions
 
 import Base: show
-export HashState
+export HashState, HashAlgorithm, HashAlgorithms
 
 # All Hash Algorithms derive from this abstract type
 abstract HashAlgorithm
+
+# This is our rather poorly named list of HashAlgorithm types
+HashAlgorithms = DataType[]
 
 
 # This is the user-facing type that is used to actually hash stuff
@@ -45,7 +48,7 @@ begin
     # First, create the type itself
     @eval immutable $name <: HashAlgorithm; end
 
-    # Next, record all the important information about this guy
+    # Next, record all the important information about this hash algorithm
     @eval output_size(::Type{$name}) = $(convert(Int,dgst_size))
     @eval ctx_size(::Type{$name}) = $(convert(Int,ctx_size))
     @eval hash_type(::Type{$name}) = $nh
@@ -67,6 +70,9 @@ begin
       ccall($fptr_digest,Void,(Ptr{Void},Uint32,Ptr{Uint8}),state.ctx,sizeof(dgst),dgst)
       dgst
     end
+
+    # Add this type into the HashAlgorithms group
+    @eval push!(HashAlgorithms, $name)
 
     # Finally, export the type we just created
     eval(current_module(), Expr(:toplevel, Expr(:export, name)))
