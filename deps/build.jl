@@ -31,7 +31,12 @@ env = {"HOGWEED_LIBS" => "-L$(libdirs[1]) -L$(BinDeps.libdir(nettle)) -lhogweed 
        "NETTLE_LIBS" => "-L$(libdirs[1]) -L$(BinDeps.libdir(nettle)) -lnettle -lgmp",
        "LIBS" => "-lgmp ", "LD_LIBRARY_PATH" => join([libdirs[1];BinDeps.libdir(nettle)],":")}
 
-provides( Sources, URI("http://www.lysator.liu.se/~nisse/archive/nettle-2.7.tar.gz"), nettle )
-provides( BuildProcess, Autotools(lib_dirs = libdirs, include_dirs = includedirs, env = env), nettle )
+provides( Sources, URI("http://www.lysator.liu.se/~nisse/archive/nettle-2.7.1.tar.gz"), nettle )
+provides( BuildProcess,
+          Autotools(lib_dirs = libdirs,
+                    include_dirs = includedirs,
+                    env = env,
+                    configure_options = ["--disable-openssl", "--libdir=$(BinDeps.libdir(nettle))"]),
+          nettle )
 
 @BinDeps.install
