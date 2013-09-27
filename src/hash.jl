@@ -16,6 +16,16 @@ type HashState{T<:HashAlgorithm}
   ctx::Array{Uint8,1}
 end
 
+# This is a mirror of the nettle-meta.h:nettle_hash struct
+immutable NettleHash
+    name::Ptr{Uint8}
+    context_size::Cuint
+    digest_size::Cuint
+    block_size::Cuint
+    init::Ptr{Void}     # nettle_hash_init_func
+    update::Ptr{Void}   # nettle_hash_update_func
+    digest::Ptr{Void}   # nettle_hash_digest_func
+end
 
 
 # We're going to load in each nettle_hash struct individually, deriving
@@ -24,25 +34,24 @@ end
 begin
   hash_idx = 1
   while( true )
-    nh = unsafe_load(cglobal(("nettle_hashes",nettle),Ptr{Ptr{Void}}),hash_idx)
-    if nh == C_NULL
+    nhptr = unsafe_load(cglobal(("nettle_hashes",nettle),Ptr{Ptr{Void}}),hash_idx)
+    if nhptr == C_NULL
       break
     end
+    nh = unsafe_load(convert(Ptr{NettleHash}, nhptr))
 
     # Otherwise, we continue on to derive the information from this struct
-    name_ptr = convert(Ptr{Uint8},unsafe_load(nh))
-    name = symbol(uppercase(bytestring(name_ptr)))
+    name = symbol(uppercase(bytestring(nh.name)))
 
     # Load in the Ptr{Uint32}'s
-    ctx_size = unsafe_load(convert(Ptr{Uint32},nh),3)
-    dgst_size = unsafe_load(convert(Ptr{Uint32},nh),4)
-    block_size = unsafe_load(convert(Ptr{Uint32},nh),5)
+    ctx_size = nh.context_size
+    dgst_size = nh.digest_size
+    block_size = nh.block_size
 
     # Save the function pointers as well
-    fptrs = nh + 24
-    fptr_init = unsafe_load(fptrs,1)
-    fptr_update = unsafe_load(fptrs,2)
-    fptr_digest = unsafe_load(fptrs,3)
+    fptr_init = nh.init
+    fptr_update = nh.update
+    fptr_digest = nh.digest
     
 
     # First, create the type itself
@@ -51,7 +60,7 @@ begin
     # Next, record all the important information about this hash algorithm
     @eval output_size(::Type{$name}) = $(convert(Int,dgst_size))
     @eval ctx_size(::Type{$name}) = $(convert(Int,ctx_size))
-    @eval hash_type(::Type{$name}) = $nh
+    @eval hash_type(::Type{$name}) = $nhptr
 
     # Generate the init, update, and digest functions while we're at it!
     # Since we have the function pointers from nh, we'll use those
