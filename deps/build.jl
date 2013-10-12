@@ -5,19 +5,12 @@ using BinDeps
 nettle = library_dependency("nettle", aliases = ["libnettle","libnettle-4-6"])
 
 @windows_only begin
-  if Pkg.installed("RPMmd") === nothing
-    error("RPMmd package not installed, please run Pkg.add(\"RPMmd\")")
-  end
   using RPMmd
   provides(RPMmd.RPM, "libnettle", nettle, os = :Windows )
 end
 
 @osx_only begin
-  if Pkg.installed("Homebrew") === nothing
-    error("Homebrew package not installed, please run Pkg.add(\"Homebrew\")")
-  end
   using Homebrew
-
   provides( Homebrew.HB, "nettle", nettle, os = :Darwin )
 end
 
