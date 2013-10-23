@@ -32,4 +32,4 @@ provides( BuildProcess,
                     configure_options = ["--disable-openssl", "--libdir=$(BinDeps.libdir(nettle))"]),
           nettle )
 
-@BinDeps.install
+@BinDeps.install [:nettle => :nettle]

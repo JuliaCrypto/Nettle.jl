@@ -1,7 +1,7 @@
 module Nettle
 
-using BinDeps
-@BinDeps.load_dependencies [:nettle]
+# Load library
+include( "../deps/deps.jl")
 
 # Bring in Hashing functionality
 include( "hash.jl" )
