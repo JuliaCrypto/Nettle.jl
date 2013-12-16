@@ -1,3 +1,6 @@
+using Nettle
+using Base.Test
+
 # Hash tests
 h = HashState(MD5)
 update!(h,"")
