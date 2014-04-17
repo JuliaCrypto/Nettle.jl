@@ -71,12 +71,12 @@ begin
     end
 
     @eval function update!(state::HashState{$name},data)
-      ccall($fptr_update,Void,(Ptr{Void},Csize_t,Ptr{Uint8}),state.ctx,sizeof(data),data)
+      ccall($fptr_update,Void,(Ptr{Void},Csize_t,Ptr{Uint8}),state.ctx,sizeof(data),pointer(data))
     end
 
     @eval function digest!(state::HashState{$name})
       dgst = Array(Uint8,output_size($name))
-      ccall($fptr_digest,Void,(Ptr{Void},Uint32,Ptr{Uint8}),state.ctx,sizeof(dgst),dgst)
+      ccall($fptr_digest,Void,(Ptr{Void},Uint32,Ptr{Uint8}),state.ctx,sizeof(dgst),pointer(dgst))
       dgst
     end
 
