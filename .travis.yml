@@ -11,8 +11,8 @@ env:
         - JULIAVERSION="releases"
         - JULIAVERSION="nightlies"
 before_install:
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./CI/install_julia_osx.sh; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./CI/install_julia_linux.sh; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source ./CI/install_julia_osx.sh; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then source ./CI/install_julia_linux.sh; fi
     - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 script:
     - julia -e 'versioninfo(); Pkg.init(); Pkg.clone(pwd())'
