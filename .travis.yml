@@ -15,5 +15,5 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then source ./CI/install_julia_linux.sh; fi
     - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 script:
-    - julia -e 'versioninfo(); Pkg.init(); Pkg.clone(pwd()); Pkg.resolve(); Pkg.build("Nettle")'
+    - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("Nettle"))`); Pkg.pin("Nettle"); Pkg.resolve(); Pkg.build("Nettle")'
     - julia ./test/test.jl
