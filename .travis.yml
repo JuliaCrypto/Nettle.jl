@@ -1,17 +1,19 @@
 language: cpp
+os:
+    - osx
+    - linux
 compiler:
-  - clang
+    - clang
 notifications:
-  email: false
+    email: false
 env:
-  matrix:
-    - JULIAVERSION="juliareleases"
-    - JULIAVERSION="julianightlies"
+    matrix:
+        - JULIAVERSION="releases"
+        - JULIAVERSION="nightlies"
 before_install:
-  - sudo add-apt-repository ppa:staticfloat/julia-deps -y
-  - sudo add-apt-repository ppa:staticfloat/${JULIAVERSION} -y
-  - sudo apt-get update -qq -y
-  - sudo apt-get install libpcre3-dev julia libnettle4 -y
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./CI/install_julia_osx.sh; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./CI/install_julia_linux.sh; fi
+    - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 script:
-  - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("Nettle"))`); Pkg.pin("Nettle"); Pkg.resolve()'
-  - julia ./test/test.jl
+    - julia -e 'versioninfo(); Pkg.init(); Pkg.clone(pwd())'
+    - julia ./test/test.jl
