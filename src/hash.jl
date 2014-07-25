@@ -72,6 +72,7 @@ begin
 
     @eval function update!(state::HashState{$name},data)
       ccall($fptr_update,Void,(Ptr{Void},Csize_t,Ptr{Uint8}),state.ctx,sizeof(data),pointer(data))
+      state
     end
 
     @eval function digest!(state::HashState{$name})
@@ -80,11 +81,20 @@ begin
       dgst
     end
 
+    # Generate e.g. sha256_hash(string) and sha256_hmac(string)
+    name_hash = symbol("$(bytestring(nh.name))_hash")
+    @eval $name_hash(string) = hash(HashState($name), string)
+
+    name_hmac = symbol("$(bytestring(nh.name))_hmac")
+    @eval $name_hmac(key, string) = hash(HMACState($name, key), string)
+
     # Add this type into the HashAlgorithms group
     @eval push!(HashAlgorithms, $name)
 
     # Finally, export the type we just created
-    eval(current_module(), Expr(:toplevel, Expr(:export, name)))
+    for sym in {name, name_hash, name_hmac}
+        eval(current_module(), Expr(:toplevel, Expr(:export, sym)))
+    end
 
     hash_idx += 1
   end
