@@ -13,6 +13,9 @@ data = "this is my data"
 h = HMACState(SHA256, secret_key)
 update!(h, data)
 hexdigest!(h)
+
+#or...
+bytes2hex(sha256_hmac(secret_key, data))
 ```
 
 Outputs:
@@ -34,6 +37,9 @@ Typical usage of these hash algoritms is to create a `HashState`, `update!` it, 
 h = HashState(SHA256)
 update!(h, "this is a test")
 hexdigest!(h)
+
+#or...
+sha256_hash("this is a test")
 ```
 
 Outputs:
