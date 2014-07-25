@@ -8,7 +8,6 @@ notifications:
     email: false
 env:
     matrix:
-        - JULIAVERSION="releases"
         - JULIAVERSION="nightlies"
 before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source ./CI/install_julia_osx.sh; fi
