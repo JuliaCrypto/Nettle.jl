@@ -39,7 +39,7 @@ update!(h, "this is a test")
 hexdigest!(h)
 
 #or...
-sha256_hash("this is a test")
+bytes2hex(sha256_hash("this is a test"))
 ```
 
 Outputs:
