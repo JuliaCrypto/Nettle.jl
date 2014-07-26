@@ -83,10 +83,10 @@ begin
 
     # Generate e.g. sha256_hash(string) and sha256_hmac(string)
     name_hash = symbol("$(bytestring(nh.name))_hash")
-    @eval $name_hash(string) = hash(HashState($name), string)
+    @eval $name_hash(string) = digest!(update!(HashState($name), string))
 
     name_hmac = symbol("$(bytestring(nh.name))_hmac")
-    @eval $name_hmac(key, string) = hash(HMACState($name, key), string)
+    @eval $name_hmac(key, string) = digest!(update!(HMACState($name, key), string))
 
     # Add this type into the HashAlgorithms group
     @eval push!(HashAlgorithms, $name)
