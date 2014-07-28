@@ -27,6 +27,7 @@ end
 
 function update!{T<:HashAlgorithm}(state::HMACState{T},data)
   ccall((:nettle_hmac_update,nettle),Void,(Ptr{Void},Ptr{Void},Csize_t,Ptr{Uint8}),state.state,hash_type(T),sizeof(data),data)
+  state
 end
 
 function digest!{T<:HashAlgorithm}(state::HMACState{T})
