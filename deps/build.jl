@@ -10,8 +10,8 @@ nettle = library_dependency("nettle", aliases = ["libnettle","libnettle-4-6"])
 end
 
 @osx_only begin
-  using Homebrew
-  provides( Homebrew.HB, "nettle", nettle, os = :Darwin )
+  #using Homebrew
+  #provides( Homebrew.HB, "nettle", nettle, os = :Darwin )
 end
 
 provides( AptGet, "libnettle4", nettle )
@@ -26,7 +26,7 @@ env = {"HOGWEED_LIBS" => "-L$(libdirs[1]) -L$(BinDeps.libdir(nettle)) -lhogweed 
 
 provides( Sources,
           URI("http://www.lysator.liu.se/~nisse/archive/nettle-2.7.1.tar.gz"),
-          SHA="297c69e90bbd448f72e854abe5cc7868c08d710e1c1bcd6a14adf06e25629d58a3ef4d65ab588d001ec7091aa583032312ad15b416ea5479e5bf0ea63717f473",
+          SHA="bc71ebd43435537d767799e414fce88e521b7278d48c860651216e1fc6555b40",
           nettle )
 provides( BuildProcess,
           Autotools(lib_dirs = libdirs,
