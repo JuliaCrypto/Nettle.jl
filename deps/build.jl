@@ -6,7 +6,7 @@ nettle = library_dependency("nettle", aliases = ["libnettle","libnettle-4-6"])
 
 @windows_only begin
   using WinRPM
-  provides(WinRPM.RPM, "libnettle", nettle, os = :Windows )
+  provides(WinRPM.RPM, "libnettle-4-6", nettle, os = :Windows )
 end
 
 @osx_only begin
