@@ -10,8 +10,8 @@ nettle = library_dependency("nettle", aliases = ["libnettle","libnettle-4-6"])
 end
 
 @osx_only begin
-  #using Homebrew
-  #provides( Homebrew.HB, "nettle", nettle, os = :Darwin )
+  using Homebrew
+  provides( Homebrew.HB, "nettle", nettle, os = :Darwin )
 end
 
 provides( AptGet, "libnettle4", nettle )
