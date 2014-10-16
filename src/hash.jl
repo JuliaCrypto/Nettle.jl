@@ -92,7 +92,7 @@ begin
     @eval push!(HashAlgorithms, $name)
 
     # Finally, export the type we just created
-    for sym in {name, name_hash, name_hmac}
+    for sym in [name, name_hash, name_hmac]
         eval(current_module(), Expr(:toplevel, Expr(:export, sym)))
     end
 
