@@ -1,6 +1,10 @@
 module Nettle
 
-include( "../deps/deps.jl")
+if isfile(joinpath(Pkg.dir("Nettle"),"deps","deps.jl"))
+   include("../deps/deps.jl")
+else
+    error("Nettle not properly installed. Please run Pkg.build(\"Nettle\")")
+end
 include( "hash.jl" )
 include( "hmac.jl" )
 
