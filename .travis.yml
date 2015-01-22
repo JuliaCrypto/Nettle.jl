@@ -10,6 +10,6 @@ notifications:
 script:
     - julia -e 'Pkg.clone(pwd())'
     - julia -e 'Pkg.build("Nettle")'
-    - julia --check-bounds=yes --code-coverage=user -e 'Pkg.test("Nettle")'
+    - julia --check-bounds=yes -e 'Pkg.test("Nettle", coverage=true)'
 after_success:
     - julia -e 'cd(Pkg.dir("Nettle")); Pkg.clone("https://github.com/staticfloat/Coverage.jl.git"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
