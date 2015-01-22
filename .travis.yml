@@ -1,18 +1,11 @@
-language: cpp
+language: julia
 os:
     - osx
     - linux
-compiler:
-    - clang
+julia:
+    - release
+    - nightly
 notifications:
     email: false
-env:
-    matrix:
-        - JULIAVERSION="nightlies"
-before_install:
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source ./CI/install_julia_osx.sh; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then source ./CI/install_julia_linux.sh; fi
-    - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-script:
-    - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("Nettle"))`); Pkg.pin("Nettle"); Pkg.resolve(); Pkg.build("Nettle")'
-    - julia ./test/test.jl
+after_success:
+- julia -e 'cd(Pkg.dir("Nettle")); Pkg.clone("https://github.com/staticfloat/Coverage.jl.git"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
