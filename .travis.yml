@@ -7,3 +7,5 @@ julia:
     - nightly
 notifications:
     email: false
+after_success:
+    - julia -e 'cd(Pkg.dir("Nettle")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
