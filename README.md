@@ -31,7 +31,7 @@ Hashing Functionality
 
 `libnettle` supports a wide array of hashing algorithms.  This package interrogates `libnettle` at startup to determine the available hash types, which are then available in `Nettle.HashAlgorithms`.  Typically these include `SHA1`, `SHA224`, `SHA256`, `SHA384`, `SHA512`, `MD2`, `MD5` and `RIPEMD160`.  The Hashing algorithms are also individually exported by `Nettle`, so you may access them with just `SHA256`, for example.
 
-Typical usage of these hash algoritms is to create a `HashState`, `update!` it, and finally get a `digest`:
+Typical usage of these hash algorithms is to create a `HashState`, `update!` it, and finally get a `digest`:
 
 ```julia
 h = HashState(SHA256)
