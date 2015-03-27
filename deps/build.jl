@@ -21,7 +21,7 @@ provides( Yum, "nettle", nettle )
 julia_usrdir = normpath(JULIA_HOME*"/../") # This is a stopgap, we need a better built-in solution to get the included libraries
 libdirs = String["$(julia_usrdir)/lib"]
 includedirs = String["$(julia_usrdir)/include"]
-env = Compat.@Dict("HOGWEED_LIBS" => "-L$(libdirs[1]) -L$(BinDeps.libdir(nettle)) -lhogweed -lgmp",
+env = @compat Dict("HOGWEED_LIBS" => "-L$(libdirs[1]) -L$(BinDeps.libdir(nettle)) -lhogweed -lgmp",
        "NETTLE_LIBS" => "-L$(libdirs[1]) -L$(BinDeps.libdir(nettle)) -lnettle -lgmp",
        "LD_LIBRARY_PATH" => join([libdirs[1];BinDeps.libdir(nettle)],":"))
 
@@ -36,4 +36,4 @@ provides( BuildProcess,
                     configure_options = ["--disable-openssl", "--libdir=$(BinDeps.libdir(nettle))"]),
           nettle )
 
-@BinDeps.install [:nettle => :nettle]
+@compat @BinDeps.install Dict(:nettle => :nettle)
