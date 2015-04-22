@@ -31,7 +31,7 @@ end
 # We're going to load in each nettle_hash struct individually, deriving
 # HashAlgorithm types off of the names we find, and calculating the output
 # and context size from the data members in the C structures
-begin
+function __init__()
   hash_idx = 1
   while( true )
     nhptr = unsafe_load(cglobal(("nettle_hashes",nettle),Ptr{Ptr{Void}}),hash_idx)
@@ -99,6 +99,7 @@ begin
     hash_idx += 1
   end
 end
+__init__()
 
 function show{T<:HashAlgorithm}( io::IO, ::HashState{T} )
   write(io, "$(string(T)) Hash state")
