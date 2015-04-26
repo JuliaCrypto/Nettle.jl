@@ -18,13 +18,13 @@ end
 
 # This is a mirror of the nettle-meta.h:nettle_hash struct
 immutable NettleHash
-    name::Ptr{Uint8}
-    context_size::Cuint
-    digest_size::Cuint
-    block_size::Cuint
-    init::Ptr{Void}     # nettle_hash_init_func
-    update::Ptr{Void}   # nettle_hash_update_func
-    digest::Ptr{Void}   # nettle_hash_digest_func
+  name::Ptr{Uint8}
+  context_size::Cuint
+  digest_size::Cuint
+  block_size::Cuint
+  init::Ptr{Void}     # nettle_hash_init_func
+  update::Ptr{Void}   # nettle_hash_update_func
+  digest::Ptr{Void}   # nettle_hash_digest_func
 end
 
 
@@ -99,7 +99,11 @@ function __init__()
     hash_idx += 1
   end
 end
-__init__()
+
+# Only manually call __init__() on old versions of Julia
+if VERSION < v"0.3-"
+  __init__()
+end
 
 function show{T<:HashAlgorithm}( io::IO, ::HashState{T} )
   write(io, "$(string(T)) Hash state")
