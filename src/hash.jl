@@ -53,7 +53,6 @@ function hash_init()
     fptr_update = nh.update
     fptr_digest = nh.digest
 
-
     # First, create the type itself
     @eval immutable $name <: HashAlgorithm; end
 
@@ -93,7 +92,7 @@ function hash_init()
 
     # Finally, export the type we just created
     for sym in [name, name_hash, name_hmac]
-        eval(current_module(), Expr(:toplevel, Expr(:export, sym)))
+        eval(Expr(:export, sym))
     end
 
     hash_idx += 1

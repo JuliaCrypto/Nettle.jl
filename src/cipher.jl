@@ -124,7 +124,7 @@ function cipher_init()
 
     # Finally, export the type we just created
     for sym in [name, name_encrypt, name_decrypt]
-        eval(current_module(), Expr(:toplevel, Expr(:export, sym)))
+        eval(Expr(:export, sym))
     end
 
     cipher_idx += 1
