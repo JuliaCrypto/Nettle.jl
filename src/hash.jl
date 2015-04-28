@@ -13,30 +13,30 @@ HashAlgorithms = DataType[]
 
 # This is the user-facing type that is used to actually hash stuff
 type HashState{T<:HashAlgorithm}
-  ctx::Array{Uint8,1}
+    ctx::Array{Uint8,1}
 end
 
 # This is a mirror of the nettle-meta.h:nettle_hash struct
 immutable NettleHash
-  name::Ptr{Uint8}
-  context_size::Cuint
-  digest_size::Cuint
-  block_size::Cuint
-  init::Ptr{Void}     # nettle_hash_init_func
-  update::Ptr{Void}   # nettle_hash_update_func
-  digest::Ptr{Void}   # nettle_hash_digest_func
+    name::Ptr{Uint8}
+    context_size::Cuint
+    digest_size::Cuint
+    block_size::Cuint
+    init::Ptr{Void}     # nettle_hash_init_func
+    update::Ptr{Void}   # nettle_hash_update_func
+    digest::Ptr{Void}   # nettle_hash_digest_func
 end
 
 
 # We're going to load in each nettle_hash struct individually, deriving
 # HashAlgorithm types off of the names we find, and calculating the output
 # and context size from the data members in the C structures
-function __init__()
-  hash_idx = 1
-  while( true )
+function hash_init()
+    hash_idx = 1
+    while( true )
     nhptr = unsafe_load(cglobal(("nettle_hashes",nettle),Ptr{Ptr{Void}}),hash_idx)
     if nhptr == C_NULL
-      break
+        break
     end
     nh = unsafe_load(convert(Ptr{NettleHash}, nhptr))
 
@@ -52,7 +52,7 @@ function __init__()
     fptr_init = nh.init
     fptr_update = nh.update
     fptr_digest = nh.digest
-    
+
 
     # First, create the type itself
     @eval immutable $name <: HashAlgorithm; end
@@ -65,20 +65,20 @@ function __init__()
     # Generate the init, update, and digest functions while we're at it!
     # Since we have the function pointers from nh, we'll use those
     @eval function HashState(::Type{$name})
-      ctx = Array(Uint8, ctx_size($name))
-      ccall($fptr_init,Void,(Ptr{Void},),ctx)
-      HashState{$name}(ctx)
+        ctx = Array(Uint8, ctx_size($name))
+        ccall($fptr_init,Void,(Ptr{Void},),ctx)
+        HashState{$name}(ctx)
     end
 
     @eval function update!(state::HashState{$name},data)
-      ccall($fptr_update,Void,(Ptr{Void},Csize_t,Ptr{Uint8}),state.ctx,sizeof(data),pointer(data))
-      state
+        ccall($fptr_update,Void,(Ptr{Void},Csize_t,Ptr{Uint8}),state.ctx,sizeof(data),pointer(data))
+        state
     end
 
     @eval function digest!(state::HashState{$name})
-      dgst = Array(Uint8,output_size($name))
-      ccall($fptr_digest,Void,(Ptr{Void},Uint32,Ptr{Uint8}),state.ctx,sizeof(dgst),pointer(dgst))
-      dgst
+        dgst = Array(Uint8,output_size($name))
+        ccall($fptr_digest,Void,(Ptr{Void},Uint32,Ptr{Uint8}),state.ctx,sizeof(dgst),pointer(dgst))
+        dgst
     end
 
     # Generate e.g. sha256_hash(string) and sha256_hmac(string)
@@ -93,18 +93,14 @@ function __init__()
 
     # Finally, export the type we just created
     for sym in [name, name_hash, name_hmac]
+        println("Eval'ing $name $name_hash $name_hmac")
         eval(current_module(), Expr(:toplevel, Expr(:export, sym)))
     end
 
     hash_idx += 1
-  end
-end
-
-# Only manually call __init__() on old versions of Julia
-if VERSION < v"0.3-"
-  __init__()
+    end
 end
 
 function show{T<:HashAlgorithm}( io::IO, ::HashState{T} )
-  write(io, "$(string(T)) Hash state")
+    write(io, "$(string(T)) Hash state")
 end

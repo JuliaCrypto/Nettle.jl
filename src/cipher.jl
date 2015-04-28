@@ -14,11 +14,11 @@ CipherAlgorithms = DataType[]
 
 # This is the user-facing type that is used to actually cipher stuff
 type CipherEncrypt{T<:CipherAlgorithm}
-  ctx::Array{Uint8,1}
+    ctx::Array{Uint8,1}
 end
 
 type CipherDecrypt{T<:CipherAlgorithm}
-  ctx::Array{Uint8,1}
+    ctx::Array{Uint8,1}
 end
 
 # This is a mirror of the nettle-meta.h:nettle_cipher struct
@@ -37,12 +37,12 @@ end
 # We're going to load in each nettle_cipher struct individually, deriving
 # CipherAlgorithm types off of the names we find, and calculating the output
 # and context size from the data members in the C structures
-begin
-  cipher_idx = 1
-  while( true )
+function cipher_init()
+    cipher_idx = 1
+    while( true )
     nhptr = unsafe_load(cglobal(("nettle_ciphers",nettle),Ptr{Ptr{Void}}),cipher_idx)
     if nhptr == C_NULL
-      break
+        break
     end
     nh = unsafe_load(convert(Ptr{NettleCipher}, nhptr))
 
@@ -59,7 +59,7 @@ begin
     fptr_set_decrypt_key = nh.set_decrypt_key
     fptr_encrypt = nh.encrypt
     fptr_decrypt = nh.decrypt
-    
+
 
     # First, create the type itself
     @eval immutable $name <: CipherAlgorithm; end
@@ -73,43 +73,43 @@ begin
     # Generate the constructors and encrypt/decrypt functions while we're at it!
     # Since we have the function pointers from nh, we'll use those
     @eval function CipherEncrypt(::Type{$name},key::String)
-      length(key) != key_size($name) && error("Key must be $(key_size($name)) bytes long")
-      ctx = Array(Uint8, ctx_size($name))
-      ccall($fptr_set_encrypt_key,Void,(Ptr{Void},Cuint,Ptr{Uint8}),ctx,length(key),pointer(key))
-      CipherEncrypt{$name}(ctx)
+        length(key) != key_size($name) && error("Key must be $(key_size($name)) bytes long")
+        ctx = Array(Uint8, ctx_size($name))
+        ccall($fptr_set_encrypt_key,Void,(Ptr{Void},Cuint,Ptr{Uint8}),ctx,length(key),pointer(key))
+        CipherEncrypt{$name}(ctx)
     end
 
     @eval function CipherDecrypt(::Type{$name},key::String)
-      length(key) != key_size($name) && error("Key must be $(key_size($name)) bytes long")
-      ctx = Array(Uint8, ctx_size($name))
-      ccall($fptr_set_decrypt_key,Void,(Ptr{Void},Cuint,Ptr{Uint8}),ctx,length(key),pointer(key))
-      CipherDecrypt{$name}(ctx)
+        length(key) != key_size($name) && error("Key must be $(key_size($name)) bytes long")
+        ctx = Array(Uint8, ctx_size($name))
+        ccall($fptr_set_decrypt_key,Void,(Ptr{Void},Cuint,Ptr{Uint8}),ctx,length(key),pointer(key))
+        CipherDecrypt{$name}(ctx)
     end
 
     @eval function decrypt(state::CipherDecrypt{$name},source)
-      result = Array(Uint8,length(source))
-      decrypt!(state,result,source)
-      result
+        result = Array(Uint8,length(source))
+        decrypt!(state,result,source)
+        result
     end
 
     @eval function decrypt!(state::CipherDecrypt{$name},dst::Vector{Uint8},source::Vector{Uint8})
-      n = length(source)
-      @assert length(dst) == n
-      ccall($fptr_decrypt,Void,(Ptr{Void},Csize_t,Ptr{Uint8},Ptr{Uint8}),state.ctx,sizeof(source),pointer(dst),pointer(source))
-      dst
+        n = length(source)
+        @assert length(dst) == n
+        ccall($fptr_decrypt,Void,(Ptr{Void},Csize_t,Ptr{Uint8},Ptr{Uint8}),state.ctx,sizeof(source),pointer(dst),pointer(source))
+        dst
     end
 
     @eval function encrypt(state::CipherEncrypt{$name},source::Vector{Uint8})
-      result = Array(Uint8,length(source))
-      encrypt!(state,result,source)
-      result
+        result = Array(Uint8,length(source))
+        encrypt!(state,result,source)
+        result
     end
 
     @eval function encrypt!(state::CipherEncrypt{$name},dst::Vector{Uint8},source::Vector{Uint8})
-      n = length(source)
-      @assert length(dst) == n
-      ccall($fptr_encrypt,Void,(Ptr{Void},Csize_t,Ptr{Uint8},Ptr{Uint8}),state.ctx,sizeof(source),pointer(dst),pointer(source))
-      dst
+        n = length(source)
+        @assert length(dst) == n
+        ccall($fptr_encrypt,Void,(Ptr{Void},Csize_t,Ptr{Uint8},Ptr{Uint8}),state.ctx,sizeof(source),pointer(dst),pointer(source))
+        dst
     end
 
     # Add this type into the CipherAlgorithms group
@@ -119,7 +119,7 @@ begin
     eval(current_module(), Expr(:toplevel, Expr(:export, name)))
 
     cipher_idx += 1
-  end
+    end
 end
 
 function show{T<:CipherAlgorithm}( io::IO, ::CipherEncrypt{T} )
