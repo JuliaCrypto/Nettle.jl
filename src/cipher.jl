@@ -72,14 +72,14 @@ function cipher_init()
 
     # Generate the constructors and encrypt/decrypt functions while we're at it!
     # Since we have the function pointers from nh, we'll use those
-    @eval function CipherEncrypt(::Type{$name},key::String)
+    @eval function CipherEncrypt(::Type{$name},key::Union(String,Vector{Uint8}))
         length(key) != key_size($name) && error("Key must be $(key_size($name)) bytes long")
         ctx = Array(Uint8, ctx_size($name))
         ccall($fptr_set_encrypt_key,Void,(Ptr{Void},Cuint,Ptr{Uint8}),ctx,length(key),pointer(key))
         CipherEncrypt{$name}(ctx)
     end
 
-    @eval function CipherDecrypt(::Type{$name},key::String)
+    @eval function CipherDecrypt(::Type{$name},key::Union(String,Vector{Uint8}))
         length(key) != key_size($name) && error("Key must be $(key_size($name)) bytes long")
         ctx = Array(Uint8, ctx_size($name))
         ccall($fptr_set_decrypt_key,Void,(Ptr{Void},Cuint,Ptr{Uint8}),ctx,length(key),pointer(key))
@@ -112,11 +112,20 @@ function cipher_init()
         dst
     end
 
+    # Generate e.g. aes128_encrypt(key,string) and aes128_decrypt(key,string)
+    name_encrypt = symbol("$(bytestring(nh.name))_encrypt")
+    @eval $name_encrypt(key, string) = encrypt(CipherEncrypt($name, key), string)
+
+    name_decrypt = symbol("$(bytestring(nh.name))_decrypt")
+    @eval $name_decrypt(key, string) = decrypt(CipherDecrypt($name, key), string)
+
     # Add this type into the CipherAlgorithms group
     @eval push!(CipherAlgorithms, $name)
 
     # Finally, export the type we just created
-    eval(current_module(), Expr(:toplevel, Expr(:export, name)))
+    for sym in [name, name_encrypt, name_decrypt]
+        eval(current_module(), Expr(:toplevel, Expr(:export, sym)))
+    end
 
     cipher_idx += 1
     end

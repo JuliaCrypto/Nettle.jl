@@ -93,7 +93,6 @@ function hash_init()
 
     # Finally, export the type we just created
     for sym in [name, name_hash, name_hmac]
-        println("Eval'ing $name $name_hash $name_hmac")
         eval(current_module(), Expr(:toplevel, Expr(:export, sym)))
     end
 

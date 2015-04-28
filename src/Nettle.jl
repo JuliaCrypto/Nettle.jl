@@ -16,11 +16,13 @@ function __init__()
 end
 
 # Only manually call __init__() on old versions of Julia
-if VERSION < v"0.3-"
-	__init__()
-end
+#if VERSION < v"0.3-"
+#	__init__()
+#end
+
+# NOTE: Letting Julia call __init__() herself causes exporting problems!
+__init__()
 
 # similar to Python's hmac.HMAC.hexdigest
 hexdigest!(state::Union(HMACState,HashState)) = bytes2hex(digest!(state))
-
 end

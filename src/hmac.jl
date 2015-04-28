@@ -12,11 +12,11 @@ type HMACState{T<:HashAlgorithm}
   state::Array{Uint8,1}
 end
 
-function show{T<:HashAlgorithm}( io::IO, ::HMACState{T} )
+function show{T<:HashAlgorithm}(io::IO, ::HMACState{T})
   write(io, "$(string(T)) HMAC state")
 end
 
-function HMACState{T<:HashAlgorithm}(::Type{T},key )
+function HMACState{T<:HashAlgorithm}(::Type{T}, key)
   outer = Array(Uint8,ctx_size(T))
   inner = Array(Uint8,ctx_size(T))
   state = Array(Uint8,ctx_size(T))
