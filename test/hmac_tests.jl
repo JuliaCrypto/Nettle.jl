@@ -1,6 +1,6 @@
 # MD5 HMAC tests from:
 # https://git.lysator.liu.se/nettle/nettle/blob/master/testsuite/hmac-test.c
-for (key,text,digest) in {
+for (key,text,digest) in [
     (
         "",
         "",
@@ -57,20 +57,20 @@ for (key,text,digest) in {
         "Than One Block-Size Data",
         "6f630fad67cda0ee1fb1f562db3aa53e"
     )
-}
+]
     @test md5_hmac(key,text) == hex2bytes(digest)
 end
 
 
 # SHA1 HMAC tests from:
 # https://git.lysator.liu.se/nettle/nettle/blob/master/testsuite/hmac-test.c
-for (key,text,digest) in {
+for (key,text,digest) in [
     (
         "",
         "",
         "fbdb1d1b18aa6c08324b7d64b71fb76370690e1d"
     ),(
-        "key",  
+        "key",
         "The quick brown fox jumps over the lazy dog",
         "de7c9b85b8b78aa6bc8a7a36f70a90701c9db4d9"
     ),(
@@ -121,14 +121,14 @@ for (key,text,digest) in {
         "Than One Block-Size Data",
         "e8e99d0f45237d786d6bbaa7965c7808bbff1a91"
     )
-}
+]
     @test sha1_hmac(key,text) == hex2bytes(digest)
 end
 
 
 # SHA256 HMAC tests from:
 # https://git.lysator.liu.se/nettle/nettle/blob/master/testsuite/hmac-test.c
-for (key,text,digest) in {
+for (key,text,digest) in [
    (
         "",
         "",
@@ -203,6 +203,6 @@ for (key,text,digest) in {
         "9b09ffa71b942fcb27635fbcd5b0e944" *
         "bfdc63644f0713938a7f51535c3a35e2"
     )
-}
+]
     @test sha256_hmac(key,text) == hex2bytes(digest)
 end

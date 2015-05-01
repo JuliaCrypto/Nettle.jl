@@ -1,6 +1,6 @@
 # MD5 hash tests from:
 # https://git.lysator.liu.se/nettle/nettle/blob/master/testsuite/md5-test.c
-for (text, hash) in {
+for (text, hash) in [
     (
         "",
         "d41d8cd98f00b204e9800998ecf8427e"
@@ -26,14 +26,14 @@ for (text, hash) in {
         "5678901234567890",
         "57edf4a22be3c955ac49da2e2107b67a"
     )
-}
+]
     @test md5_hash(text) == hex2bytes(hash)
 end
 
 
 # SHA1 hash tests from:
 # https://git.lysator.liu.se/nettle/nettle/blob/master/testsuite/sha1-test.c
-for (text, hash) in {
+for (text, hash) in [
     (
         "",
         "da39a3ee5e6b4b0d3255bfef95601890afd80709",
@@ -58,21 +58,21 @@ for (text, hash) in {
         "1234567890123456789012345678901234567890",
         "50abf5706a150990a08b2c5ea40fa0e585554732",
     ),(
-        "38", 
+        "38",
         "5b384ce32d8cdef02bc3a139d4cac0a22bb029e8"
     )
-}
+]
     @test sha1_hash(text) == hex2bytes(hash)
 end
 
 
 # SHA256 hash tests from:
 # https://git.lysator.liu.se/nettle/nettle/blob/master/testsuite/sha256-test.c
-for (text,hash) in {
+for (text,hash) in [
     (
         "abc",
         "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
-    ),( 
+    ),(
         "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
         "248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1"
     ),(
@@ -102,7 +102,7 @@ for (text,hash) in {
         "5678901234567890",
         "f371bc4a311f2b009eef952dd83ca80e2b60026c8e935592d0f9c308453c813e"
     )
-}
+]
     @test sha256_hash(text) == hex2bytes(hash)
 end
 
