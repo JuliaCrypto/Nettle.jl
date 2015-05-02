@@ -75,14 +75,26 @@ function cipher_init()
     @eval function CipherEncrypt(::Type{$name},key::Union(String,Vector{Uint8}))
         length(key) != key_size($name) && error("Key must be $(key_size($name)) bytes long")
         ctx = Array(Uint8, ctx_size($name))
-        ccall($fptr_set_encrypt_key,Void,(Ptr{Void},Cuint,Ptr{Uint8}),ctx,length(key),pointer(key))
+        if nettle_major_version >= 3
+            ccall($fptr_set_encrypt_key, Void, (Ptr{Void}, Ptr{Uint8}),
+                  ctx, pointer(key))
+        else
+            ccall($fptr_set_encrypt_key, Void, (Ptr{Void}, Cuint, Ptr{Uint8}),
+                  ctx, length(key), pointer(key))
+        end
         CipherEncrypt{$name}(ctx)
     end
 
     @eval function CipherDecrypt(::Type{$name},key::Union(String,Vector{Uint8}))
         length(key) != key_size($name) && error("Key must be $(key_size($name)) bytes long")
         ctx = Array(Uint8, ctx_size($name))
-        ccall($fptr_set_decrypt_key,Void,(Ptr{Void},Cuint,Ptr{Uint8}),ctx,length(key),pointer(key))
+        if nettle_major_version >= 3
+            ccall($fptr_set_decrypt_key, Void, (Ptr{Void}, Ptr{Uint8}),
+                  ctx, pointer(key))
+        else
+            ccall($fptr_set_decrypt_key, Void, (Ptr{Void}, Cuint, Ptr{Uint8}),
+                  ctx, length(key), pointer(key))
+        end
         CipherDecrypt{$name}(ctx)
     end
 
