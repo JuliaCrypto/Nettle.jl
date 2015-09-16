@@ -13,12 +13,12 @@ HashAlgorithms = DataType[]
 
 # This is the user-facing type that is used to actually hash stuff
 type HashState{T<:HashAlgorithm}
-    ctx::Array{Uint8,1}
+    ctx::Array{UInt8,1}
 end
 
 # This is a mirror of the nettle-meta.h:nettle_hash struct
 immutable NettleHash
-    name::Ptr{Uint8}
+    name::Ptr{UInt8}
     context_size::Cuint
     digest_size::Cuint
     block_size::Cuint
@@ -43,7 +43,7 @@ function hash_init()
     # Otherwise, we continue on to derive the information from this struct
     name = symbol(uppercase(bytestring(nh.name)))
 
-    # Load in the Ptr{Uint32}'s
+    # Load in the Ptr{UInt32}'s
     ctx_size = nh.context_size
     dgst_size = nh.digest_size
     block_size = nh.block_size
@@ -64,19 +64,19 @@ function hash_init()
     # Generate the init, update, and digest functions while we're at it!
     # Since we have the function pointers from nh, we'll use those
     @eval function HashState(::Type{$name})
-        ctx = Array(Uint8, ctx_size($name))
+        ctx = Array(UInt8, ctx_size($name))
         ccall($fptr_init,Void,(Ptr{Void},),ctx)
         HashState{$name}(ctx)
     end
 
     @eval function update!(state::HashState{$name},data)
-        ccall($fptr_update,Void,(Ptr{Void},Csize_t,Ptr{Uint8}),state.ctx,sizeof(data),pointer(data))
+        ccall($fptr_update,Void,(Ptr{Void},Csize_t,Ptr{UInt8}),state.ctx,sizeof(data),pointer(data))
         state
     end
 
     @eval function digest!(state::HashState{$name})
-        dgst = Array(Uint8,output_size($name))
-        ccall($fptr_digest,Void,(Ptr{Void},Uint32,Ptr{Uint8}),state.ctx,sizeof(dgst),pointer(dgst))
+        dgst = Array(UInt8,output_size($name))
+        ccall($fptr_digest,Void,(Ptr{Void},UInt32,Ptr{UInt8}),state.ctx,sizeof(dgst),pointer(dgst))
         dgst
     end
 
