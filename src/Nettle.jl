@@ -27,11 +27,6 @@ function __init__()
     cipher_init()
 end
 
-# Only manually call __init__() on old versions of Julia
-if VERSION < v"0.3-"
-    __init__()
-end
-
 # similar to Python's hmac.HMAC.hexdigest
 hexdigest!(state::Union(HMACState,HashState)) = bytes2hex(digest!(state))
 end
