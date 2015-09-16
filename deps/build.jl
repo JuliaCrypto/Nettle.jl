@@ -19,8 +19,8 @@ provides( AptGet, "libnettle4", nettle )
 provides( Yum, "nettle", nettle )
 
 julia_usrdir = normpath(JULIA_HOME*"/../") # This is a stopgap, we need a better built-in solution to get the included libraries
-libdirs = String["$(julia_usrdir)/lib"]
-includedirs = String["$(julia_usrdir)/include"]
+libdirs = AbstractString["$(julia_usrdir)/lib"]
+includedirs = AbstractString["$(julia_usrdir)/include"]
 env = @compat Dict("HOGWEED_LIBS" => "-L$(libdirs[1]) -L$(BinDeps.libdir(nettle)) -lhogweed -lgmp",
        "NETTLE_LIBS" => "-L$(libdirs[1]) -L$(BinDeps.libdir(nettle)) -lnettle -lgmp",
        "LD_LIBRARY_PATH" => join([libdirs[1];BinDeps.libdir(nettle)],":"))

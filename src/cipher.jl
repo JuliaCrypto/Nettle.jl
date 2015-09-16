@@ -14,16 +14,16 @@ CipherAlgorithms = DataType[]
 
 # This is the user-facing type that is used to actually cipher stuff
 type CipherEncrypt{T<:CipherAlgorithm}
-    ctx::Array{Uint8,1}
+    ctx::Array{UInt8,1}
 end
 
 type CipherDecrypt{T<:CipherAlgorithm}
-    ctx::Array{Uint8,1}
+    ctx::Array{UInt8,1}
 end
 
 # This is a mirror of the nettle-meta.h:nettle_cipher struct
 immutable NettleCipher
-    name::Ptr{Uint8}
+    name::Ptr{UInt8}
     context_size::Cuint
     block_size::Cuint
     key_size::Cuint
@@ -49,7 +49,7 @@ function cipher_init()
     # Otherwise, we continue on to derive the information from this struct
     name = symbol(uppercase(bytestring(nh.name)))
 
-    # Load in the Ptr{Uint32}'s
+    # Load in the Ptr{UInt32}'s
     const_ctx_size = nh.context_size
     const_block_size = nh.block_size
     const_key_size = nh.key_size
@@ -72,55 +72,55 @@ function cipher_init()
 
     # Generate the constructors and encrypt/decrypt functions while we're at it!
     # Since we have the function pointers from nh, we'll use those
-    @eval function CipherEncrypt(::Type{$name},key::Union(String,Vector{Uint8}))
+    @eval function CipherEncrypt(::Type{$name},key::Union(AbstractString,Vector{UInt8}))
         length(key) != key_size($name) && error("Key must be $(key_size($name)) bytes long")
-        ctx = Array(Uint8, ctx_size($name))
+        ctx = Array(UInt8, ctx_size($name))
         if nettle_major_version >= 3
-            ccall($fptr_set_encrypt_key, Void, (Ptr{Void}, Ptr{Uint8}),
+            ccall($fptr_set_encrypt_key, Void, (Ptr{Void}, Ptr{UInt8}),
                   ctx, pointer(key))
         else
-            ccall($fptr_set_encrypt_key, Void, (Ptr{Void}, Cuint, Ptr{Uint8}),
+            ccall($fptr_set_encrypt_key, Void, (Ptr{Void}, Cuint, Ptr{UInt8}),
                   ctx, length(key), pointer(key))
         end
         CipherEncrypt{$name}(ctx)
     end
 
-    @eval function CipherDecrypt(::Type{$name},key::Union(String,Vector{Uint8}))
+    @eval function CipherDecrypt(::Type{$name},key::Union(AbstractString,Vector{UInt8}))
         length(key) != key_size($name) && error("Key must be $(key_size($name)) bytes long")
-        ctx = Array(Uint8, ctx_size($name))
+        ctx = Array(UInt8, ctx_size($name))
         if nettle_major_version >= 3
-            ccall($fptr_set_decrypt_key, Void, (Ptr{Void}, Ptr{Uint8}),
+            ccall($fptr_set_decrypt_key, Void, (Ptr{Void}, Ptr{UInt8}),
                   ctx, pointer(key))
         else
-            ccall($fptr_set_decrypt_key, Void, (Ptr{Void}, Cuint, Ptr{Uint8}),
+            ccall($fptr_set_decrypt_key, Void, (Ptr{Void}, Cuint, Ptr{UInt8}),
                   ctx, length(key), pointer(key))
         end
         CipherDecrypt{$name}(ctx)
     end
 
     @eval function decrypt(state::CipherDecrypt{$name},source)
-        result = Array(Uint8,length(source))
+        result = Array(UInt8,length(source))
         decrypt!(state,result,source)
         result
     end
 
-    @eval function decrypt!(state::CipherDecrypt{$name},dst::Vector{Uint8},source::Vector{Uint8})
+    @eval function decrypt!(state::CipherDecrypt{$name},dst::Vector{UInt8},source::Vector{UInt8})
         n = length(source)
         @assert length(dst) == n
-        ccall($fptr_decrypt,Void,(Ptr{Void},Csize_t,Ptr{Uint8},Ptr{Uint8}),state.ctx,sizeof(source),pointer(dst),pointer(source))
+        ccall($fptr_decrypt,Void,(Ptr{Void},Csize_t,Ptr{UInt8},Ptr{UInt8}),state.ctx,sizeof(source),pointer(dst),pointer(source))
         dst
     end
 
-    @eval function encrypt(state::CipherEncrypt{$name},source::Vector{Uint8})
-        result = Array(Uint8,length(source))
+    @eval function encrypt(state::CipherEncrypt{$name},source::Vector{UInt8})
+        result = Array(UInt8,length(source))
         encrypt!(state,result,source)
         result
     end
 
-    @eval function encrypt!(state::CipherEncrypt{$name},dst::Vector{Uint8},source::Vector{Uint8})
+    @eval function encrypt!(state::CipherEncrypt{$name},dst::Vector{UInt8},source::Vector{UInt8})
         n = length(source)
         @assert length(dst) == n
-        ccall($fptr_encrypt,Void,(Ptr{Void},Csize_t,Ptr{Uint8},Ptr{Uint8}),state.ctx,sizeof(source),pointer(dst),pointer(source))
+        ccall($fptr_encrypt,Void,(Ptr{Void},Csize_t,Ptr{UInt8},Ptr{UInt8}),state.ctx,sizeof(source),pointer(dst),pointer(source))
         dst
     end
 

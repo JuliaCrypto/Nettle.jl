@@ -48,7 +48,7 @@ Outputs:
 2e99758548972a8e8822ad47fa1017ff72f06f3ff6a016851f45c398732bc50c
 ```
 
-A `digest!` function is also available to return the digest as an `Array(Uint8,1)`.  Note that both the `digest!` function and the `hexdigest!` function reset the internal `HashState` object to a pristine state, ready for further `update!` calls.
+A `digest!` function is also available to return the digest as an `Array(UInt8,1)`.  Note that both the `digest!` function and the `hexdigest!` function reset the internal `HashState` object to a pristine state, ready for further `update!` calls.
 
 
 HMAC Functionality
@@ -67,4 +67,4 @@ Outputs:
 "ca1dcafe1b5fb329256248196c0f92a95fbe3788db6c5cb0775b4106db437ba2"
 ```
 
-A `digest!` function is also available to return the digest as an `Array(Uint8,1)`.  Note that both the `digest!` function and the `hexdigest!` function reset the internal `HMACState` object to a pristine state, ready for further `update!` calls.
+A `digest!` function is also available to return the digest as an `Array(UInt8,1)`.  Note that both the `digest!` function and the `hexdigest!` function reset the internal `HMACState` object to a pristine state, ready for further `update!` calls.
