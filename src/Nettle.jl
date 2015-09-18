@@ -28,6 +28,9 @@ function __init__()
     global const nettle_major_version = get_libnettle_version()
 end
 
-# similar to Python's hmac.HMAC.hexdigest
-#hexdigest!(state::Union(HMACState,HashState)) = bytes2hex(digest!(state))
+if VERSION >= v"0.4.0-dev+6521"
+    include("precompile.jl")
+    _precompile_()
 end
+
+end # module
