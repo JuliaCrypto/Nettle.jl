@@ -1,13 +1,16 @@
+VERSION >= v"0.4.0-dev+6521" && __precompile__()
 module Nettle
-
 using Compat
 
+# Load libnettle from BinDeps
 const depfile = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
 if isfile(depfile)
     include(depfile)
 else
-    error("Nettle not properly installed. Please run Pkg.build(\"Nettle\")")
+    error("libnettle not properly installed. Please run Pkg.build(\"Nettle\")")
 end
+
+include( "hash_common.jl" )
 include( "hash.jl" )
 include( "hmac.jl" )
 include( "cipher.jl" )
@@ -23,10 +26,8 @@ end
 
 function __init__()
     global const nettle_major_version = get_libnettle_version()
-    hash_init()
-    cipher_init()
 end
 
 # similar to Python's hmac.HMAC.hexdigest
-hexdigest!(state::Union(HMACState,HashState)) = bytes2hex(digest!(state))
+#hexdigest!(state::Union(HMACState,HashState)) = bytes2hex(digest!(state))
 end

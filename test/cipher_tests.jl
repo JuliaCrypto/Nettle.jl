@@ -25,8 +25,8 @@ for (key,text,encrypted) in [
         "3ad77bb40d7a3660a89ecaf32466ef97f5d3d58503b9699de785895a96fdbaaf43b1cd7f598ece23881b00e3ed0306887b0c785e27e8ad3f8223207104725dd4",
     )
 ]
-    @test aes128_encrypt(hex2bytes(key),hex2bytes(text)) == hex2bytes(encrypted)
-    @test aes128_decrypt(hex2bytes(key),hex2bytes(encrypted)) == hex2bytes(text)
+    @test encrypt("aes128", hex2bytes(key), hex2bytes(text)) == hex2bytes(encrypted)
+    @test decrypt("aes128", hex2bytes(key), hex2bytes(encrypted)) == hex2bytes(text)
 end
 
 # AES192
@@ -41,8 +41,8 @@ for (key,text,encrypted) in [
         "bd334f1d6e45f25ff712a214571fa5cc974104846d0ad3ad7734ecb3ecee4eefef7afd2270e2e60adce0ba2face6444e9a4b41ba738d6c72fb16691603c18e0e",
     )
 ]
-    @test aes192_encrypt(hex2bytes(key),hex2bytes(text)) == hex2bytes(encrypted)
-    @test aes192_decrypt(hex2bytes(key),hex2bytes(encrypted)) == hex2bytes(text)
+    @test encrypt("aes192", hex2bytes(key), hex2bytes(text)) == hex2bytes(encrypted)
+    @test decrypt("aes192", hex2bytes(key), hex2bytes(encrypted)) == hex2bytes(text)
 end
 
 # AES256
@@ -57,6 +57,6 @@ for (key,text,encrypted) in [
         "f3eed1bdb5d2a03c064b5a7e3db181f8591ccb10d410ed26dc5ba74a31362870b6ed21b99ca6f4f9f153e7b1beafed1d23304b7a39f9f3ff067d8d8f9e24ecc7",
     )
 ]
-    @test aes256_encrypt(hex2bytes(key),hex2bytes(text)) == hex2bytes(encrypted)
-    @test aes256_decrypt(hex2bytes(key),hex2bytes(encrypted)) == hex2bytes(text)
+    @test encrypt("aes256", hex2bytes(key), hex2bytes(text)) == hex2bytes(encrypted)
+    @test decrypt("aes256", hex2bytes(key), hex2bytes(encrypted)) == hex2bytes(text)
 end
