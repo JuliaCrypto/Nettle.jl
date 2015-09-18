@@ -11,12 +11,12 @@ immutable NettleHash
     digest::Ptr{Void}   # nettle_hash_digest_func
 end
 
-# We convert from the above NettleHash to a NettleHashType for two reasons:
+# We convert from the above NettleHash to a HashType for two reasons:
 #   First, we need a way to keep the actual pointer address around
 #   Secondly, it's nice to convert the name from a pointer to an actual string
 # This cuts down on the amount of work we have to do for some operations
 # (especially HMAC operations) at the cost of a bit of memory.  I'll take it.
-immutable NettleHashType
+immutable HashType
     name::ASCIIString
     context_size::Cuint
     digest_size::Cuint
@@ -29,15 +29,15 @@ immutable NettleHashType
     ptr::Ptr{Void}
 end
 
-# The function that maps from a NettleHash to a NettleHashType
-function NettleHashType(nh::NettleHash, nhptr::Ptr{Void})
-    NettleHashType( uppercase(bytestring(nh.name)),
+# The function that maps from a NettleHash to a HashType
+function HashType(nh::NettleHash, nhptr::Ptr{Void})
+    HashType( uppercase(bytestring(nh.name)),
                     nh.context_size, nh.digest_size, nh.block_size,
                     nh.init, nh.update, nh.digest, nhptr)
 end
 
 # The global dictionary of hash types we know how to construct
-const _hash_types = Dict{AbstractString,NettleHashType}()
+const _hash_types = Dict{AbstractString,HashType}()
 
 # We're going to load in each NettleHash struct individually, deriving
 # HashAlgorithm types off of the names we find, and storing the output
@@ -55,7 +55,7 @@ function get_hash_types()
             hash_idx += 1
 
             nh = unsafe_load(convert(Ptr{NettleHash}, nhptr))
-            hash_type = NettleHashType(nh, convert(Ptr{Void},nhptr))
+            hash_type = HashType(nh, convert(Ptr{Void},nhptr))
             _hash_types[hash_type.name] = hash_type
         end
     end

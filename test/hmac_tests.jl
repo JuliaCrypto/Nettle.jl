@@ -58,7 +58,7 @@ for (key,text,digest) in [
         "6f630fad67cda0ee1fb1f562db3aa53e"
     )
 ]
-    @test hmac("md5", key, text) == hex2bytes(digest)
+    @test calc_hmac("md5", key, text) == hex2bytes(digest)
 end
 
 
@@ -122,7 +122,7 @@ for (key,text,digest) in [
         "e8e99d0f45237d786d6bbaa7965c7808bbff1a91"
     )
 ]
-    @test hmac("sha1", key, text) == hex2bytes(digest)
+    @test calc_hmac("sha1", key, text) == hex2bytes(digest)
 end
 
 
@@ -204,5 +204,5 @@ for (key,text,digest) in [
         "bfdc63644f0713938a7f51535c3a35e2"
     )
 ]
-    @test hmac("sha256", key, text) == hex2bytes(digest)
+    @test calc_hmac("sha256", key, text) == hex2bytes(digest)
 end

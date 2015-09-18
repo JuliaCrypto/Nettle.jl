@@ -3,8 +3,7 @@
 #http://www.lysator.liu.se/~nisse/nettle/nettle.html#Cipher-functions
 
 import Base: show
-export CipherEncrypt, CipherDecrypt, CipherAlgorithm, CipherAlgorithms
-export key_size, block_size, decrypt, decrypt!, encrypt, encrypt!
+export CipherType, get_cipher_types, Encryptor, Decryptor, decrypt, decrypt!, encrypt, encrypt!
 
 # This is a mirror of the nettle-meta.h:nettle_cipher struct
 immutable NettleCipher
@@ -19,7 +18,7 @@ immutable NettleCipher
 end
 
 # For much the same reasons as in hash_common.jl, we define a separate, more "Julia friendly" type
-immutable NettleCipherType
+immutable CipherType
     name::AbstractString
     context_size::Cuint
     block_size::Cuint
@@ -31,24 +30,24 @@ immutable NettleCipherType
 end
 
 # These are the user-facing types that are used to actually {en,de}cipher stuff
-immutable NettleEncryptionState
-    cipher_type::NettleCipherType
+immutable Encryptor
+    cipher_type::CipherType
     state::Array{UInt8,1}
 end
-immutable NettleDecryptionState
-    cipher_type::NettleCipherType
+immutable Decryptor
+    cipher_type::CipherType
     state::Array{UInt8,1}
 end
 
-# The function that maps from a NettleCipher to a NettleCipherType
-function NettleCipherType(nc::NettleCipher)
-    NettleCipherType( uppercase(bytestring(nc.name)),
-                    nc.context_size, nc.block_size, nc.key_size,
-                    nc.set_encrypt_key, nc.set_decrypt_key, nc.encrypt, nc.decrypt)
+# The function that maps from a NettleCipher to a CipherType
+function CipherType(nc::NettleCipher)
+    CipherType( uppercase(bytestring(nc.name)),
+                nc.context_size, nc.block_size, nc.key_size,
+                nc.set_encrypt_key, nc.set_decrypt_key, nc.encrypt, nc.decrypt)
 end
 
 # The global dictionary of hash types we know how to construct
-const _cipher_types = Dict{AbstractString,NettleCipherType}()
+const _cipher_types = Dict{AbstractString,CipherType}()
 
 # We're going to load in each NettleCipher struct individually, deriving
 # HashAlgorithm types off of the names we find, and storing the output
@@ -65,7 +64,7 @@ function get_cipher_types()
             end
             cipher_idx += 1
             nc = unsafe_load(convert(Ptr{NettleCipher}, ncptr))
-            cipher_type = NettleCipherType(nc)
+            cipher_type = CipherType(nc)
             _cipher_types[cipher_type.name] = cipher_type
         end
     end
@@ -73,16 +72,16 @@ function get_cipher_types()
 end
 
 
-function EncryptionAlgorithm(name::AbstractString, key)
+function Encryptor(name::AbstractString, key)
     cipher_types = get_cipher_types()
     name = uppercase(name)
     if !haskey(cipher_types, name)
-        ArgumentError("Invalid cipher type $name: call Nettle.get_cipher_types() to see available list")
+        throw(ArgumentError("Invalid cipher type $name: call Nettle.get_cipher_types() to see available list"))
     end
     cipher_type = cipher_types[name]
 
     if length(key) != cipher_type.key_size
-        ArgumentError("Key must be $(cipher_type.key_size) bytes long")
+        throw(ArgumentError("Key must be $(cipher_type.key_size) bytes long"))
     end
 
     state = Array(UInt8, cipher_type.context_size)
@@ -92,19 +91,19 @@ function EncryptionAlgorithm(name::AbstractString, key)
         ccall( cipher_type.set_encrypt_key, Void, (Ptr{Void}, Cuint, Ptr{UInt8}), state, length(key), pointer(key))
     end
 
-    return NettleEncryptionState(cipher_type, state)
+    return Encryptor(cipher_type, state)
 end
 
-function DecryptionAlgorithm(name::AbstractString, key)
+function Decryptor(name::AbstractString, key)
     cipher_types = get_cipher_types()
     name = uppercase(name)
     if !haskey(cipher_types, name)
-        ArgumentError("Invalid cipher type $name: call Nettle.get_cipher_types() to see available list")
+        throw(ArgumentError("Invalid cipher type $name: call Nettle.get_cipher_types() to see available list"))
     end
     cipher_type = cipher_types[name]
 
     if length(key) != cipher_type.key_size
-        ArgumentError("Key must be $(cipher_type.key_size) bytes long")
+        throw(ArgumentError("Key must be $(cipher_type.key_size) bytes long"))
     end
 
     state = Array(UInt8, cipher_type.context_size)
@@ -114,50 +113,50 @@ function DecryptionAlgorithm(name::AbstractString, key)
         ccall( cipher_type.set_decrypt_key, Void, (Ptr{Void}, Cuint, Ptr{UInt8}), state, length(key), pointer(key))
     end
 
-    return NettleDecryptionState(cipher_type, state)
+    return Decryptor(cipher_type, state)
 end
 
-function decrypt!(state::NettleDecryptionState, result, data)
+function decrypt!(state::Decryptor, result, data)
     if length(result) < length(data)
-        ArgumentError("Output array of length $(length(result)) insufficient for input data length ($(length(data)))")
+        throw(ArgumentError("Output array of length $(length(result)) insufficient for input data length ($(length(data)))"))
     end
     ccall(state.cipher_type.decrypt, Void, (Ptr{Void},Csize_t,Ptr{UInt8},Ptr{UInt8}),
         state.state, sizeof(data), pointer(result), pointer(data))
     return result
 end
 
-function decrypt(state::NettleDecryptionState, data)
+function decrypt(state::Decryptor, data)
     result = Array(UInt8, length(data))
     decrypt!(state, result, data)
     return result
 end
 
 
-function encrypt!(state::NettleEncryptionState, result, data)
+function encrypt!(state::Encryptor, result, data)
     if length(result) < length(data)
-        ArgumentError("Output array of length $(length(result)) insufficient for input data length ($(length(data)))")
+        throw(ArgumentError("Output array of length $(length(result)) insufficient for input data length ($(length(data)))"))
     end
     ccall(state.cipher_type.encrypt, Void, (Ptr{Void},Csize_t,Ptr{UInt8},Ptr{UInt8}),
         state.state, sizeof(data), pointer(result), pointer(data))
     return result
 end
 
-function encrypt(state::NettleEncryptionState, data)
+function encrypt(state::Encryptor, data)
     result = Array(UInt8, length(data))
     encrypt!(state, result, data)
     return result
 end
 
 # The one-shot functions that make this whole thing so easy
-decrypt(name::AbstractString, key, data) = decrypt(DecryptionAlgorithm(name, key), data)
-encrypt(name::AbstractString, key, data) = encrypt(EncryptionAlgorithm(name, key), data)
+decrypt(name::AbstractString, key, data) = decrypt(Decryptor(name, key), data)
+encrypt(name::AbstractString, key, data) = encrypt(Encryptor(name, key), data)
 
 # Custom show overrides make this package have a little more pizzaz!
-function show(io::IO, x::NettleCipherType)
-    write(io, "Nettle $(x.name) Cipher\n")
-    write(io, "  Context size: $(x.context_size) bits\n")
-    write(io, "  Block size: $(x.block_size) bits\n")
-    write(io, "  Key size: $(x.key_size) bits")
+function show(io::IO, x::CipherType)
+    write(io, "$(x.name) Cipher\n")
+    write(io, "  Context size: $(x.context_size) bytes\n")
+    write(io, "  Block size: $(x.block_size) bytes\n")
+    write(io, "  Key size: $(x.key_size) bytes")
 end
-show(io::IO, x::NettleEncryptionState) = write(io, "Nettle $(x.cipher_type.name) Encryption state")
-show(io::IO, x::NettleDecryptionState) = write(io, "Nettle $(x.cipher_type.name) Decryption state")
+show(io::IO, x::Encryptor) = write(io, "$(x.cipher_type.name) Encryption state")
+show(io::IO, x::Decryptor) = write(io, "$(x.cipher_type.name) Decryption state")
