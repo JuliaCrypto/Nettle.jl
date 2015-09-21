@@ -11,7 +11,7 @@ update!(h, "this is a test")
 hexdigest!(h)
 
 #or...
-bytes2hex(calc_hash("sha256", "this is a test"))
+hexdigest("sha256", "this is a test")
 ```
 
 Outputs:
@@ -33,7 +33,7 @@ update!(h, "this is a test")
 hexdigest!(h)
 
 #or...
-bytes2hex(calc_hmac("sha256", "mykey", "this is a test"))
+hexdigest("sha256", "mykey", "this is a test")
 ```
 
 Outputs:
@@ -45,7 +45,7 @@ Outputs:
 A `digest!` function is also available to return the digest as an `Array(UInt8,1)`.  Note that both the `digest!` function and the `hexdigest!` function reset the internal `HMACState` object to a pristine state, ready for further `update!` calls.
 
 
-Encryption/Decryption Functionalty
+Encryption/Decryption Functionality
 ==================================
 
 Nettle also provides encryption and decryption functionality, using the `Encryptor` and `Decryptor` objects.  Cipher types are available through `get_cipher_types()`.  Create a pair of objects with a shared key, and `encrypt()`/`decrypt()` to your heart's content:

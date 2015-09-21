@@ -2,7 +2,7 @@
 ## As usual, check out http://www.lysator.liu.se/~nisse/nettle/nettle.html#Hash-functions
 
 import Base: show
-export Hasher, update!, digest!, hexdigest!, calc_hash
+export Hasher, update!, digest, digest!, hexdigest!, hexdigest
 
 immutable Hasher
     hash_type::HashType
@@ -40,8 +40,9 @@ end
 # Take a digest, and convert it to a printable hex representation
 hexdigest!(state::Hasher) = bytes2hex(digest!(state))
 
-# The one-shot function that makes this whole thing so easy.
-calc_hash(name::AbstractString, data) = digest!(update!(Hasher(name), data))
+# The one-shot functions that makes this whole thing so easy.
+digest(hash_name::AbstractString, data) = digest!(update!(Hasher(hash_name), data))
+hexdigest(hash_name::AbstractString, data) = hexdigest!(update!(Hasher(hash_name), data))
 
 # Custom show overrides make this package have a little more pizzaz!
 function show(io::IO, x::HashType)
@@ -51,4 +52,3 @@ function show(io::IO, x::HashType)
     write(io, "  Block size: $(x.block_size) bytes")
 end
 show(io::IO, x::Hasher) = write(io, "$(x.hash_type.name) Hash state")
-

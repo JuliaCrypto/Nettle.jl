@@ -3,7 +3,7 @@
 ## Also from reading the header files from libnettle source tree
 
 import Base: show
-export HMACState, update!, digest!, hexdigest!, calc_hmac
+export HMACState, update!, digest, digest!, hexdigest!, hexdigest
 
 immutable HMACState
     hash_type::HashType
@@ -46,7 +46,8 @@ end
 # Take a digest, and convert it to a printable hex representation
 hexdigest!(state::HMACState) = bytes2hex(digest!(state))
 
-# The one-shot function that makes this whole thing so easy
-calc_hmac(name::AbstractString, key, data) = digest!(update!(HMACState(name, key), data))
+# The one-shot functions that makes this whole thing so easy
+digest(hmac_name::AbstractString, key, data) = digest!(update!(HMACState(hmac_name, key), data))
+hexdigest(hmac_name::AbstractString, key, data) = hexdigest!(update!(HMACState(hmac_name, key), data))
 
 show(io::IO, x::HMACState) = write(io, "$(x.hash_type.name) HMAC state")

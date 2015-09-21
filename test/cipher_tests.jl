@@ -60,3 +60,33 @@ for (key,text,encrypted) in [
     @test encrypt("aes256", hex2bytes(key), hex2bytes(text)) == hex2bytes(encrypted)
     @test decrypt("aes256", hex2bytes(key), hex2bytes(encrypted)) == hex2bytes(text)
 end
+
+# Test lower-level API
+key = "this key's exactly 32 bytes long"
+enc = Encryptor("AES256", key)
+plaintext = "this is 16 chars"
+ciphertext = encrypt(enc, plaintext)
+
+dec = Decryptor("AES256", key)
+deciphertext = decrypt(dec, ciphertext)
+plaintext == bytestring(deciphertext)
+
+
+# Test errors
+@test_throws ArgumentError Encryptor("this is not a cipher", key)
+@test_throws ArgumentError Decryptor("this is not a cipher either", key)
+
+@test_throws ArgumentError Encryptor("AES256", "bad key length")
+@test_throws ArgumentError Decryptor("AES256", "bad key length")
+
+enc = Encryptor("AES256", key)
+dec = Decryptor("AES256", key)
+result = Array(UInt8, length(plaintext) - 1)
+@test_throws ArgumentError encrypt!(enc, result, plaintext)
+@test_throws ArgumentError decrypt!(dec, result, plaintext)
+
+# Test show methods
+println("Testing cipher show methods:")
+println(get_cipher_types()["AES256"])
+println(Encryptor("AES256", key))
+println(Decryptor("AES256", key))

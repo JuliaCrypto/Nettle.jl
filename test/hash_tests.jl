@@ -27,7 +27,7 @@ for (text, hash) in [
         "57edf4a22be3c955ac49da2e2107b67a"
     )
 ]
-    @test calc_hash("md5", text) == hex2bytes(hash)
+    @test digest("md5", text) == hex2bytes(hash)
 end
 
 
@@ -62,7 +62,7 @@ for (text, hash) in [
         "5b384ce32d8cdef02bc3a139d4cac0a22bb029e8"
     )
 ]
-    @test calc_hash("sha1", text) == hex2bytes(hash)
+    @test hexdigest("sha1", text) == hash
 end
 
 
@@ -103,7 +103,9 @@ for (text,hash) in [
         "f371bc4a311f2b009eef952dd83ca80e2b60026c8e935592d0f9c308453c813e"
     )
 ]
-    @test calc_hash("sha256", text) == hex2bytes(hash)
+    h = Hasher("sha256")
+    update!(h, text)
+    @test hexdigest!(h) == hash
 end
 
 
@@ -116,3 +118,11 @@ update!(h,"The quick brown fox jumps over the lazy dog")
 h = Hasher("SHA256")
 update!(h,"The quick brown fox jumps over the lazy dog")
 @test hexdigest!(h) == "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592"
+
+# Test invalid parameters
+@test_throws ArgumentError Hasher("this is not a hash name")
+
+# Test show methods
+println("Testing hash show methods:")
+println(get_hash_types()["SHA256"])
+println(Hasher("SHA256"))
