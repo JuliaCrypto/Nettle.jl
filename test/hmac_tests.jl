@@ -1,6 +1,6 @@
 # MD5 HMAC tests from:
 # https://git.lysator.liu.se/nettle/nettle/blob/master/testsuite/hmac-test.c
-for (key,text,digest) in [
+for (key,text,true_digest) in [
     (
         "",
         "",
@@ -58,13 +58,13 @@ for (key,text,digest) in [
         "6f630fad67cda0ee1fb1f562db3aa53e"
     )
 ]
-    @test md5_hmac(key,text) == hex2bytes(digest)
+    @test digest("md5", key, text) == hex2bytes(true_digest)
 end
 
 
 # SHA1 HMAC tests from:
 # https://git.lysator.liu.se/nettle/nettle/blob/master/testsuite/hmac-test.c
-for (key,text,digest) in [
+for (key,text,true_digest) in [
     (
         "",
         "",
@@ -122,13 +122,13 @@ for (key,text,digest) in [
         "e8e99d0f45237d786d6bbaa7965c7808bbff1a91"
     )
 ]
-    @test sha1_hmac(key,text) == hex2bytes(digest)
+    @test hexdigest("sha1", key, text) == true_digest
 end
 
 
 # SHA256 HMAC tests from:
 # https://git.lysator.liu.se/nettle/nettle/blob/master/testsuite/hmac-test.c
-for (key,text,digest) in [
+for (key,text,true_digest) in [
    (
         "",
         "",
@@ -204,5 +204,14 @@ for (key,text,digest) in [
         "bfdc63644f0713938a7f51535c3a35e2"
     )
 ]
-    @test sha256_hmac(key,text) == hex2bytes(digest)
+    h = HMACState("sha256", key)
+    update!(h, text)
+    @test hexdigest!(h) == true_digest
 end
+
+# Test invalid parameters
+@test_throws ArgumentError HMACState("this is not a cipher", "")
+
+# Test show methods
+println("Testing HMAC show methods:")
+println(HMACState("SHA256", ""))
