@@ -23,7 +23,7 @@ libdirs = AbstractString["$(julia_usrdir)/lib"]
 includedirs = AbstractString["$(julia_usrdir)/include"]
 env = @compat Dict("HOGWEED_LIBS" => "-L$(libdirs[1]) -L$(BinDeps.libdir(nettle)) -lhogweed -lgmp",
        "NETTLE_LIBS" => "-L$(libdirs[1]) -L$(BinDeps.libdir(nettle)) -lnettle -lgmp",
-       "LD_LIBRARY_PATH" => join([libdirs[1];BinDeps.libdir(nettle);ENV["LD_LIBRARY_PATH"]],":"))
+       "LD_LIBRARY_PATH" => join([libdirs[1];BinDeps.libdir(nettle);get(ENV,"LD_LIBRARY_PATH","")],":"))
 
 provides( Sources,
           URI("http://www.lysator.liu.se/~nisse/archive/nettle-2.7.1.tar.gz"),
