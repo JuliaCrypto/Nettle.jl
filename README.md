@@ -1,6 +1,9 @@
 Nettle.jl
 =========
 
+[![Build Status](https://travis-ci.org/staticfloat/Nettle.jl.svg?branch=master)](https://travis-ci.org/staticfloat/Nettle.jl) [![Build status](https://ci.appveyor.com/api/projects/status/auhjpg59nw3a3aij?svg=true)](https://ci.appveyor.com/project/staticfloat/nettle-jl)
+
+
 `libnettle` supports a wide array of hashing algorithms.  This package interrogates `libnettle` to determine the available hash types, which are then available from `Nettle.get_hash_types()`.  Typically these include `SHA1`, `SHA224`, `SHA256`, `SHA384`, `SHA512`, `MD2`, `MD5` and `RIPEMD160`.
 
 Typical usage of these hash algorithms is to create a `Hasher`, `update!` it, and finally get a `digest`:
