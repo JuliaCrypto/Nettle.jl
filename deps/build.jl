@@ -3,11 +3,11 @@ using Compat
 
 @BinDeps.setup
 
-nettle = library_dependency("nettle", aliases = ["libnettle","libnettle-4-6"])
+nettle = library_dependency("nettle", aliases = ["libnettle","libnettle-4-6","libnettle-6-1"])
 
 @windows_only begin
   using WinRPM
-  provides(WinRPM.RPM, "libnettle-4-6", nettle, os = :Windows )
+  provides(WinRPM.RPM, "libnettle-6-1", nettle, os = :Windows )
 end
 
 @osx_only begin
