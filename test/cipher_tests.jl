@@ -109,3 +109,4 @@ for (iv,key,text,encrypted) in [
     @test encrypt("aes256", :CBC, hex2bytes(iv), hex2bytes(key), hex2bytes(text)) == hex2bytes(encrypted)
     @test decrypt("aes256", :CBC, hex2bytes(iv), hex2bytes(key), hex2bytes(encrypted)) == hex2bytes(text)
 end
+println("Cipher AES256CBC OK: Plaintext must be padded to 16 bytes alignment.")
