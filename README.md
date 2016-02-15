@@ -61,8 +61,32 @@ ciphertext = encrypt(enc, plaintext)
 
 dec = Decryptor("AES256", key)
 deciphertext = decrypt(dec, ciphertext)
-plaintext == bytestring(deciphertext)
+plaintext.data == deciphertext # no bytestring
 
 # or...
 decrypt("AES256", key, encrypt("AES256", key, plaintext)) == plaintext.data
+```
+
+For AES256CBC encrypt/decrypt, generate a pair of key32 and iv16 with salt.
+
+(And add or trim padding yourself.)
+
+```julia
+passwd = "Secret Passphrase"
+salt = hex2bytes("a3e550e89e70996c") # use random 8 bytes
+(key32, iv16) = gen_key32_iv16(passwd.data, salt)
+
+enc = Encryptor("AES256", key32)
+plaintext = "Message"
+ciphertext = encrypt(enc, :CBC, iv16, add_padding_PKCS5(plaintext.data, 16))
+
+dec = Decryptor("AES256", key32)
+deciphertext = decrypt(dec, :CBC, iv16, ciphertext)
+plaintext.data == trim_padding_PKCS5(deciphertext) # no bytestring
+
+# or...
+plainbytes = hex2bytes("414155aa5541416162")
+cipherbytes = encrypt("AES256", :CBC, iv16, key32, add_padding_PKCS5(plainbytes, 16))
+decipherbytes = decrypt("AES256", :CBC, iv16, key32, cipherbytes)
+plainbytes == trim_padding_PKCS5(decipherbytes) # no bytestring
 ```

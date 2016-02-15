@@ -90,3 +90,29 @@ println("Testing cipher show methods:")
 println(get_cipher_types()["AES256"])
 println(Encryptor("AES256", key))
 println(Decryptor("AES256", key))
+
+println("Testing cipher AES256CBC:")
+# AES256CBC
+for (pw,salt,iv,key,text,encrypted) in [
+    (
+        "Secret Passphrase",
+        "a3e550e89e70996c",
+        "7c7ed9434ddb9c2d1e1fcc38b4bf4667",
+        "e299ff9d8e4831f07e5323913c53e5f0fec3a040a211d6562fa47607244d0051",
+        "4d657373616765",
+        "da8aab1b904205a7e49c1ecc7118a8f4",
+    ),(
+        "Secret Passphrase",
+        "a3e550e89e70996c",
+        "7c7ed9434ddb9c2d1e1fcc38b4bf4667",
+        "e299ff9d8e4831f07e5323913c53e5f0fec3a040a211d6562fa47607244d0051",
+        "4d657373616765090909090909090909",
+        "da8aab1b904205a7e49c1ecc7118a8f4804bef7be79216196739de7845da182d",
+    )
+]
+    (key32, iv16) = (hex2bytes(key), hex2bytes(iv))
+    @test gen_key32_iv16(pw.data, hex2bytes(salt)) == (key32, iv16)
+    @test encrypt("aes256", :CBC, iv16, key32, add_padding_PKCS5(hex2bytes(text), 16)) == hex2bytes(encrypted)
+    @test trim_padding_PKCS5(decrypt("aes256", :CBC, iv16, key32, hex2bytes(encrypted))) == hex2bytes(text)
+end
+println("Cipher AES256CBC OK.")
