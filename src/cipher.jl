@@ -3,7 +3,9 @@
 #http://www.lysator.liu.se/~nisse/nettle/nettle.html#Cipher-functions
 
 import Base: show
-export CipherType, get_cipher_types, Encryptor, Decryptor, decrypt, decrypt!, encrypt, encrypt!
+export CipherType, get_cipher_types
+export gen_key32_iv16, add_padding_PKCS5, trim_padding_PKCS5
+export Encryptor, Decryptor, decrypt, decrypt!, encrypt, encrypt!
 
 # This is a mirror of the nettle-meta.h:nettle_cipher struct
 immutable NettleCipher
@@ -71,6 +73,22 @@ function get_cipher_types()
     return _cipher_types
 end
 
+function gen_key32_iv16(pw::Array{UInt8,1}, salt::Array{UInt8,1})
+    s1 = digest("MD5", [pw; salt])
+    s2 = digest("MD5", [s1; pw; salt])
+    s3 = digest("MD5", [s2; pw; salt])
+    return ([s1; s2], s3)
+end
+
+function add_padding_PKCS5(data::Array{UInt8,1}, block_size::Int)
+  padlen = block_size - (length(data) % block_size)
+  return [data; map(i -> UInt8(padlen), 1:padlen)]
+end
+
+function trim_padding_PKCS5(data::Array{UInt8,1})
+  padlen = data[length(data)]
+  return data[1:length(data)-padlen]
+end
 
 function Encryptor(name::AbstractString, key)
     cipher_types = get_cipher_types()
@@ -121,10 +139,11 @@ function decrypt!(state::Decryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
         throw(ArgumentError("Output array of length $(length(result)) insufficient for input data length ($(length(data)))"))
     end
     if e != :CBC throw(ArgumentError("now supports CBC only")) end
+    iiv = copy(iv)
     ccall((:nettle_cbc_decrypt, nettle), Void, (
         Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
         Csize_t, Ptr{UInt8}, Ptr{UInt8}),
-        state.state, state.cipher_type.decrypt, length(iv), iv,
+        state.state, state.cipher_type.decrypt, length(iiv), iiv,
         sizeof(data), pointer(result), pointer(data))
     return result
 end
@@ -155,10 +174,11 @@ function encrypt!(state::Encryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
         throw(ArgumentError("Output array of length $(length(result)) insufficient for input data length ($(length(data)))"))
     end
     if e != :CBC throw(ArgumentError("now supports CBC only")) end
+    iiv = copy(iv)
     ccall((:nettle_cbc_encrypt, nettle), Void, (
         Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
         Csize_t, Ptr{UInt8}, Ptr{UInt8}),
-        state.state, state.cipher_type.encrypt, length(iv), iv,
+        state.state, state.cipher_type.encrypt, length(iiv), iiv,
         sizeof(data), pointer(result), pointer(data))
     return result
 end
