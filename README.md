@@ -88,5 +88,5 @@ plaintext.data == trim_padding_PKCS5(deciphertext) # no bytestring
 plainbytes = hex2bytes("414155aa5541416162")
 cipherbytes = encrypt("AES256", :CBC, iv16, key32, add_padding_PKCS5(plainbytes, 16))
 decipherbytes = decrypt("AES256", :CBC, iv16, key32, cipherbytes)
-plainbytes = trim_padding_PKCS5(decipherbytes) # no bytestring
+plainbytes == trim_padding_PKCS5(decipherbytes) # no bytestring
 ```
