@@ -90,3 +90,22 @@ println("Testing cipher show methods:")
 println(get_cipher_types()["AES256"])
 println(Encryptor("AES256", key))
 println(Decryptor("AES256", key))
+
+println("Testing cipher AES256CBC:")
+# AES256CBC
+for (iv,key,text,encrypted) in [
+    (
+        "7c7ed9434ddb9c2d1e1fcc38b4bf4667",
+        "e299ff9d8e4831f07e5323913c53e5f0fec3a040a211d6562fa47607244d0051",
+        "4d657373616765090909090909090909",
+        "da8aab1b904205a7e49c1ecc7118a8f4",
+    ),(
+        "7c7ed9434ddb9c2d1e1fcc38b4bf4667",
+        "e299ff9d8e4831f07e5323913c53e5f0fec3a040a211d6562fa47607244d0051",
+        "4d65737361676509090909090909090910101010101010101010101010101010",
+        "da8aab1b904205a7e49c1ecc7118a8f4804bef7be79216196739de7845da182d",
+    )
+]
+    @test encrypt("aes256", :CBC, hex2bytes(iv), hex2bytes(key), hex2bytes(text)) == hex2bytes(encrypted)
+    @test decrypt("aes256", :CBC, hex2bytes(iv), hex2bytes(key), hex2bytes(encrypted)) == hex2bytes(text)
+end

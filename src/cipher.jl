@@ -116,6 +116,19 @@ function Decryptor(name::AbstractString, key)
     return Decryptor(cipher_type, state)
 end
 
+function decrypt!(state::Decryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
+    if length(result) < length(data)
+        throw(ArgumentError("Output array of length $(length(result)) insufficient for input data length ($(length(data)))"))
+    end
+    if e != :CBC throw(ArgumentError("now supports CBC only")) end
+    ccall((:nettle_cbc_decrypt, nettle), Void, (
+        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
+        Csize_t, Ptr{UInt8}, Ptr{UInt8}),
+        state.state, state.cipher_type.decrypt, length(iv), iv,
+        sizeof(data), pointer(result), pointer(data))
+    return result
+end
+
 function decrypt!(state::Decryptor, result, data)
     if length(result) < length(data)
         throw(ArgumentError("Output array of length $(length(result)) insufficient for input data length ($(length(data)))"))
@@ -125,12 +138,30 @@ function decrypt!(state::Decryptor, result, data)
     return result
 end
 
+function decrypt(state::Decryptor, e::Symbol, iv::Array{UInt8,1}, data)
+    result = Array(UInt8, length(data))
+    decrypt!(state, e, iv, result, data)
+    return result
+end
+
 function decrypt(state::Decryptor, data)
     result = Array(UInt8, length(data))
     decrypt!(state, result, data)
     return result
 end
 
+function encrypt!(state::Encryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
+    if length(result) < length(data)
+        throw(ArgumentError("Output array of length $(length(result)) insufficient for input data length ($(length(data)))"))
+    end
+    if e != :CBC throw(ArgumentError("now supports CBC only")) end
+    ccall((:nettle_cbc_encrypt, nettle), Void, (
+        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
+        Csize_t, Ptr{UInt8}, Ptr{UInt8}),
+        state.state, state.cipher_type.encrypt, length(iv), iv,
+        sizeof(data), pointer(result), pointer(data))
+    return result
+end
 
 function encrypt!(state::Encryptor, result, data)
     if length(result) < length(data)
@@ -138,6 +169,12 @@ function encrypt!(state::Encryptor, result, data)
     end
     ccall(state.cipher_type.encrypt, Void, (Ptr{Void},Csize_t,Ptr{UInt8},Ptr{UInt8}),
         state.state, sizeof(data), pointer(result), pointer(data))
+    return result
+end
+
+function encrypt(state::Encryptor, e::Symbol, iv::Array{UInt8,1}, data)
+    result = Array(UInt8, length(data))
+    encrypt!(state, e, iv, result, data)
     return result
 end
 
@@ -150,6 +187,9 @@ end
 # The one-shot functions that make this whole thing so easy
 decrypt(name::AbstractString, key, data) = decrypt(Decryptor(name, key), data)
 encrypt(name::AbstractString, key, data) = encrypt(Encryptor(name, key), data)
+
+decrypt(name::AbstractString, e::Symbol, iv::Array{UInt8,1}, key, data) = decrypt(Decryptor(name, key), e, iv, data)
+encrypt(name::AbstractString, e::Symbol, iv::Array{UInt8,1}, key, data) = encrypt(Encryptor(name, key), e, iv, data)
 
 # Custom show overrides make this package have a little more pizzaz!
 function show(io::IO, x::CipherType)
