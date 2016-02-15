@@ -66,3 +66,43 @@ plaintext == bytestring(deciphertext)
 # or...
 decrypt("AES256", key, encrypt("AES256", key, plaintext)) == plaintext.data
 ```
+
+For AES256CBC encrypt/decrypt, generate a pair of key32 and iv16 with salt.
+
+(And add or trim padding yourself.)
+
+```julia
+passwd = "Secret Passphrase"
+salt = hex2bytes("a3e550e89e70996c") # use random 8 bytes
+s1 = digest("MD5", [passwd.data; salt])
+s2 = digest("MD5", [s1; passwd.data; salt])
+s3 = digest("MD5", [s2; passwd.data; salt])
+key32 = [s1; s2]
+iv16 = s3
+
+enc = Encryptor("AES256", key32)
+plaintext = "Message"
+num = 16 - (length(plaintext) % 16)
+bytes16 = [plaintext.data; map(i -> UInt8(num), 1:num)]
+ciphertext = encrypt(enc, :CBC, iv16, bytes16) # add padding yourself (PKCS#5)
+
+# after encrypt, the value of iv16 (and s3) is changed
+# reset key32 and iv16
+
+passwd = "Secret Passphrase"
+salt = hex2bytes("a3e550e89e70996c")
+s1 = digest("MD5", [passwd.data; salt])
+s2 = digest("MD5", [s1; passwd.data; salt])
+s3 = digest("MD5", [s2; passwd.data; salt])
+key32 = [s1; s2]
+iv16 = s3
+
+dec = Decryptor("AES256", key32)
+deciphertext = decrypt(dec, :CBC, iv16, ciphertext)
+padlen = deciphertext[length(deciphertext)] # trim padding yourself (PKCS#5)
+plaintext == bytestring(deciphertext[1:length(deciphertext)-padlen])
+
+# or... (add or trim padding yourself)
+cipherbytes = encrypt("AES256", :CBC, iv16, key32, plainbytes)
+decipherbytes = decrypt("AES256", :CBC, iv16, key32, cipherbytes)
+```
