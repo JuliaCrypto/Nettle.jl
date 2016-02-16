@@ -82,7 +82,8 @@ end
 
 function add_padding_PKCS5(data::Array{UInt8,1}, block_size::Int)
   padlen = block_size - (length(data) % block_size)
-  return [data; map(i -> UInt8(padlen), 1:padlen)]
+  # return [data; map(i -> UInt8(padlen), 1:padlen)]
+  return [data; convert(Array{UInt8,1}, map(i -> padlen, 1:padlen))] # to pass test julia 0.3
 end
 
 function trim_padding_PKCS5(data::Array{UInt8,1})
