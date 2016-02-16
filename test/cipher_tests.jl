@@ -66,7 +66,7 @@ end
 key = "this key's exactly 32 bytes long"
 enc = Encryptor("AES256", key)
 plaintext = "this is 16 chars"
-ciphertext = encrypt(enc, plaintext)
+ciphertext = encrypt(enc, plaintext.data)
 
 dec = Decryptor("AES256", key)
 deciphertext = decrypt(dec, ciphertext)
