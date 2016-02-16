@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # AES tests from:
 # https://git.lysator.liu.se/nettle/nettle/blob/master/testsuite/aes-test.c
 
@@ -69,7 +70,19 @@ ciphertext = encrypt(enc, plaintext)
 
 dec = Decryptor("AES256", key)
 deciphertext = decrypt(dec, ciphertext)
-plaintext == bytestring(deciphertext)
+@test plaintext.data == deciphertext # no bytestring
+
+willcauseassertion = "this is 16 (∀).." # case of length(::UTF8String) == 16
+@test length(willcauseassertion) == 16
+# @test willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion)) # assertion
+# @test willcauseassertion == bytestring(decrypt(dec, encrypt(enc, willcauseassertion)))
+
+willbebroken = "this is 16 (∀)" # case of length(::UTF8String) != 16
+@test length(willbebroken) != 16
+# @test willbebroken.data == decrypt(dec, encrypt(enc, willbebroken)) # broken
+# @test willbebroken == bytestring(decrypt(dec, encrypt(enc, willbebroken))) # broken
+@test willbebroken.data == decrypt(dec, encrypt(enc, willbebroken.data)) # pass
+@test willbebroken == bytestring(decrypt(dec, encrypt(enc, willbebroken.data))) # pass
 
 
 # Test errors
