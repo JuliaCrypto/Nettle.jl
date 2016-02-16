@@ -84,6 +84,11 @@ willbebroken = "this is 16 (∀)" # case of length(::UTF8String) != 16
 @test willbebroken.data == decrypt(dec, encrypt(enc, willbebroken.data)) # pass
 @test willbebroken == bytestring(decrypt(dec, encrypt(enc, willbebroken.data))) # pass
 
+criticalbytes = hex2bytes("6e6f74555446382855aa552de2888029")
+@test length(criticalbytes) == 16
+@test criticalbytes == decrypt(dec, encrypt(enc, criticalbytes)) # pass
+# dummy = bytestring(decrypt(dec, encrypt(enc, criticalbytes))) # pass, but may be caught UnicodeError exception when evaluate dummy
+
 
 # Test errors
 @test_throws ArgumentError Encryptor("this is not a cipher", key)
