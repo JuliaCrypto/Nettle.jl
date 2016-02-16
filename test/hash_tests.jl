@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # MD5 hash tests from:
 # https://git.lysator.liu.se/nettle/nettle/blob/master/testsuite/md5-test.c
 for (text, hash) in [
@@ -25,6 +26,15 @@ for (text, hash) in [
         "34567890123456789012345678901234" *
         "5678901234567890",
         "57edf4a22be3c955ac49da2e2107b67a"
+    ),(
+        "UTF8String(∀)",
+        "cb2e2ce95d88a414ccd3773c1108f489"
+    ),(
+        "UTF8String(\xe2\x88\x80)",
+        "cb2e2ce95d88a414ccd3773c1108f489"
+    ),(
+        hex2bytes("6e6f74555446382855aa5529"), # "notUTF8(\x55\xaa\x55)".data
+        "b0672a2efe1f1d2906e236687ae0153c"
     )
 ]
     @test digest("md5", text) == hex2bytes(hash)
