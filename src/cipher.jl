@@ -159,13 +159,13 @@ function decrypt!(state::Decryptor, result, data)
 end
 
 function decrypt(state::Decryptor, e::Symbol, iv::Array{UInt8,1}, data)
-    result = Array(UInt8, length(data))
+    result = Array(UInt8, length(isa(data, AbstractString) ? data.data : data))
     decrypt!(state, e, iv, result, data)
     return result
 end
 
 function decrypt(state::Decryptor, data)
-    result = Array(UInt8, length(data))
+    result = Array(UInt8, length(isa(data, AbstractString) ? data.data : data))
     decrypt!(state, result, data)
     return result
 end
@@ -194,13 +194,13 @@ function encrypt!(state::Encryptor, result, data)
 end
 
 function encrypt(state::Encryptor, e::Symbol, iv::Array{UInt8,1}, data)
-    result = Array(UInt8, length(data))
+    result = Array(UInt8, length(isa(data, AbstractString) ? data.data : data))
     encrypt!(state, e, iv, result, data)
     return result
 end
 
 function encrypt(state::Encryptor, data)
-    result = Array(UInt8, length(data))
+    result = Array(UInt8, length(isa(data, AbstractString) ? data.data : data))
     encrypt!(state, result, data)
     return result
 end
