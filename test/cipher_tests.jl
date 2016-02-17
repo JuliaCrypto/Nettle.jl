@@ -74,11 +74,15 @@ deciphertext = decrypt(dec, ciphertext)
 
 willcauseassertion = "this is 16 (∀).." # case of length(::UTF8String) == 16
 @test length(willcauseassertion) == 16
-# @test_throws AssertionError @test willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion)) # can not catch this c assertion
-# @test_throws AssertionError @test willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion.data)) # can not catch this c assertion
+@test endof(willcauseassertion) == 18
+# @test_throws AssertionError willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion)) # can not catch this c assertion
+@test_throws ArgumentError willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion))
+# @test_throws AssertionError willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion.data)) # can not catch this c assertion
+@test_throws ArgumentError willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion.data)) # can not catch this c assertion
 
 willbebroken = "this is 16 (∀)" # case of length(::UTF8String) != 16
-@test length(willbebroken) != 16
+@test length(willbebroken) == 14
+@test endof(willbebroken) == 16
 @test willbebroken.data == decrypt(dec, encrypt(enc, willbebroken))
 @test willbebroken == bytestring(decrypt(dec, encrypt(enc, willbebroken)))
 @test willbebroken.data == decrypt(dec, encrypt(enc, willbebroken.data))
