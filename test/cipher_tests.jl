@@ -74,20 +74,23 @@ deciphertext = decrypt(dec, ciphertext)
 
 willcauseassertion = "this is 16 (∀).." # case of length(::UTF8String) == 16
 @test length(willcauseassertion) == 16
-# @test willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion)) # assertion
-# @test willcauseassertion == bytestring(decrypt(dec, encrypt(enc, willcauseassertion)))
+# @test_throws AssertionError @test willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion)) # can not catch this c assertion
+# @test_throws AssertionError @test willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion.data)) # can not catch this c assertion
 
 willbebroken = "this is 16 (∀)" # case of length(::UTF8String) != 16
 @test length(willbebroken) != 16
-# @test willbebroken.data == decrypt(dec, encrypt(enc, willbebroken)) # broken
-# @test willbebroken == bytestring(decrypt(dec, encrypt(enc, willbebroken))) # broken
-@test willbebroken.data == decrypt(dec, encrypt(enc, willbebroken.data)) # pass
-@test willbebroken == bytestring(decrypt(dec, encrypt(enc, willbebroken.data))) # pass
+@test willbebroken.data == decrypt(dec, encrypt(enc, willbebroken))
+@test willbebroken == bytestring(decrypt(dec, encrypt(enc, willbebroken)))
+@test willbebroken.data == decrypt(dec, encrypt(enc, willbebroken.data))
+@test willbebroken == bytestring(decrypt(dec, encrypt(enc, willbebroken.data)))
 
 criticalbytes = hex2bytes("6e6f74555446382855aa552de2888029")
 @test length(criticalbytes) == 16
-@test criticalbytes == decrypt(dec, encrypt(enc, criticalbytes)) # pass
-# dummy = bytestring(decrypt(dec, encrypt(enc, criticalbytes))) # pass, but may be caught UnicodeError exception when evaluate dummy
+@test criticalbytes == decrypt(dec, encrypt(enc, criticalbytes))
+
+# This one will pass, but may be caught UnicodeError exception when evaluate it by julia ide.
+dummy = bytestring(decrypt(dec, encrypt(enc, criticalbytes)))
+@test isa(dummy, AbstractString)
 
 
 # Test errors
