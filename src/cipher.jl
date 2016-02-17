@@ -81,14 +81,14 @@ function gen_key32_iv16(pw::Array{UInt8,1}, salt::Array{UInt8,1})
 end
 
 function add_padding_PKCS5(data::Array{UInt8,1}, block_size::Int)
-  padlen = block_size - (endof(data) % block_size)
+  padlen = block_size - (sizeof(data) % block_size)
   # return [data; map(i -> UInt8(padlen), 1:padlen)]
   return [data; convert(Array{UInt8,1}, map(i -> padlen, 1:padlen))] # to pass test julia 0.3
 end
 
 function trim_padding_PKCS5(data::Array{UInt8,1})
-  padlen = data[endof(data)]
-  return data[1:endof(data)-padlen]
+  padlen = data[sizeof(data)]
+  return data[1:sizeof(data)-padlen]
 end
 
 function Encryptor(name::AbstractString, key)
@@ -99,7 +99,7 @@ function Encryptor(name::AbstractString, key)
     end
     cipher_type = cipher_types[name]
 
-    if endof(key) != cipher_type.key_size
+    if sizeof(key) != cipher_type.key_size
         throw(ArgumentError("Key must be $(cipher_type.key_size) bytes long"))
     end
 
@@ -107,7 +107,7 @@ function Encryptor(name::AbstractString, key)
     if nettle_major_version >= 3
         ccall( cipher_type.set_encrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
     else
-        ccall( cipher_type.set_encrypt_key, Void, (Ptr{Void}, Cuint, Ptr{UInt8}), state, endof(key), pointer(key))
+        ccall( cipher_type.set_encrypt_key, Void, (Ptr{Void}, Cuint, Ptr{UInt8}), state, sizeof(key), pointer(key))
     end
 
     return Encryptor(cipher_type, state)
@@ -121,7 +121,7 @@ function Decryptor(name::AbstractString, key)
     end
     cipher_type = cipher_types[name]
 
-    if endof(key) != cipher_type.key_size
+    if sizeof(key) != cipher_type.key_size
         throw(ArgumentError("Key must be $(cipher_type.key_size) bytes long"))
     end
 
@@ -129,41 +129,44 @@ function Decryptor(name::AbstractString, key)
     if nettle_major_version >= 3
         ccall( cipher_type.set_decrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
     else
-        ccall( cipher_type.set_decrypt_key, Void, (Ptr{Void}, Cuint, Ptr{UInt8}), state, endof(key), pointer(key))
+        ccall( cipher_type.set_decrypt_key, Void, (Ptr{Void}, Cuint, Ptr{UInt8}), state, sizeof(key), pointer(key))
     end
 
     return Decryptor(cipher_type, state)
 end
 
 function decrypt!(state::Decryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
-    if endof(result) < endof(data)
-        throw(ArgumentError("Output array of length $(endof(result)) insufficient for input data length ($(endof(data)))"))
+    if sizeof(result) < sizeof(data)
+        throw(ArgumentError("Output array of length $(sizeof(result)) insufficient for input data length ($(sizeof(data)))"))
     end
-    if endof(result) % state.cipher_type.block_size > 0
-        throw(ArgumentError("Output array of length $(endof(result)) must be N times $(state.cipher_type.block_size) bytes long"))
+    if sizeof(result) % state.cipher_type.block_size > 0
+        throw(ArgumentError("Output array of length $(sizeof(result)) must be N times $(state.cipher_type.block_size) bytes long"))
     end
-    if endof(data) % state.cipher_type.block_size > 0
-        throw(ArgumentError("Input array of length $(endof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
+    if sizeof(data) % state.cipher_type.block_size > 0
+        throw(ArgumentError("Input array of length $(sizeof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
+    end
+    if sizeof(iv) != state.cipher_type.block_size
+        throw(ArgumentError("Iv must be $(state.cipher_type.block_size) bytes long"))
     end
     if e != :CBC throw(ArgumentError("now supports CBC only")) end
     iiv = copy(iv)
     ccall((:nettle_cbc_decrypt, nettle), Void, (
         Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
         Csize_t, Ptr{UInt8}, Ptr{UInt8}),
-        state.state, state.cipher_type.decrypt, endof(iiv), iiv,
+        state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
         sizeof(data), pointer(result), pointer(data))
     return result
 end
 
 function decrypt!(state::Decryptor, result, data)
-    if endof(result) < endof(data)
-        throw(ArgumentError("Output array of length $(endof(result)) insufficient for input data length ($(endof(data)))"))
+    if sizeof(result) < sizeof(data)
+        throw(ArgumentError("Output array of length $(sizeof(result)) insufficient for input data length ($(sizeof(data)))"))
     end
-    if endof(result) % state.cipher_type.block_size > 0
-        throw(ArgumentError("Output array of length $(endof(result)) must be N times $(state.cipher_type.block_size) bytes long"))
+    if sizeof(result) % state.cipher_type.block_size > 0
+        throw(ArgumentError("Output array of length $(sizeof(result)) must be N times $(state.cipher_type.block_size) bytes long"))
     end
-    if endof(data) % state.cipher_type.block_size > 0
-        throw(ArgumentError("Input array of length $(endof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
+    if sizeof(data) % state.cipher_type.block_size > 0
+        throw(ArgumentError("Input array of length $(sizeof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
     end
     ccall(state.cipher_type.decrypt, Void, (Ptr{Void},Csize_t,Ptr{UInt8},Ptr{UInt8}),
         state.state, sizeof(data), pointer(result), pointer(data))
@@ -171,46 +174,49 @@ function decrypt!(state::Decryptor, result, data)
 end
 
 function decrypt(state::Decryptor, e::Symbol, iv::Array{UInt8,1}, data)
-    result = Array(UInt8, endof(data))
+    result = Array(UInt8, sizeof(data))
     decrypt!(state, e, iv, result, data)
     return result
 end
 
 function decrypt(state::Decryptor, data)
-    result = Array(UInt8, endof(data))
+    result = Array(UInt8, sizeof(data))
     decrypt!(state, result, data)
     return result
 end
 
 function encrypt!(state::Encryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
-    if endof(result) < endof(data)
-        throw(ArgumentError("Output array of length $(endof(result)) insufficient for input data length ($(endof(data)))"))
+    if sizeof(result) < sizeof(data)
+        throw(ArgumentError("Output array of length $(sizeof(result)) insufficient for input data length ($(sizeof(data)))"))
     end
-    if endof(result) % state.cipher_type.block_size > 0
-        throw(ArgumentError("Output array of length $(endof(result)) must be N times $(state.cipher_type.block_size) bytes long"))
+    if sizeof(result) % state.cipher_type.block_size > 0
+        throw(ArgumentError("Output array of length $(sizeof(result)) must be N times $(state.cipher_type.block_size) bytes long"))
     end
-    if endof(data) % state.cipher_type.block_size > 0
-        throw(ArgumentError("Input array of length $(endof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
+    if sizeof(data) % state.cipher_type.block_size > 0
+        throw(ArgumentError("Input array of length $(sizeof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
+    end
+    if sizeof(iv) != state.cipher_type.block_size
+        throw(ArgumentError("Iv must be $(state.cipher_type.block_size) bytes long"))
     end
     if e != :CBC throw(ArgumentError("now supports CBC only")) end
     iiv = copy(iv)
     ccall((:nettle_cbc_encrypt, nettle), Void, (
         Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
         Csize_t, Ptr{UInt8}, Ptr{UInt8}),
-        state.state, state.cipher_type.encrypt, endof(iiv), iiv,
+        state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,
         sizeof(data), pointer(result), pointer(data))
     return result
 end
 
 function encrypt!(state::Encryptor, result, data)
-    if endof(result) < endof(data)
-        throw(ArgumentError("Output array of length $(endof(result)) insufficient for input data length ($(endof(data)))"))
+    if sizeof(result) < sizeof(data)
+        throw(ArgumentError("Output array of length $(sizeof(result)) insufficient for input data length ($(sizeof(data)))"))
     end
-    if endof(result) % state.cipher_type.block_size > 0
-        throw(ArgumentError("Output array of length $(endof(result)) must be N times $(state.cipher_type.block_size) bytes long"))
+    if sizeof(result) % state.cipher_type.block_size > 0
+        throw(ArgumentError("Output array of length $(sizeof(result)) must be N times $(state.cipher_type.block_size) bytes long"))
     end
-    if endof(data) % state.cipher_type.block_size > 0
-        throw(ArgumentError("Input array of length $(endof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
+    if sizeof(data) % state.cipher_type.block_size > 0
+        throw(ArgumentError("Input array of length $(sizeof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
     end
     ccall(state.cipher_type.encrypt, Void, (Ptr{Void},Csize_t,Ptr{UInt8},Ptr{UInt8}),
         state.state, sizeof(data), pointer(result), pointer(data))
@@ -218,13 +224,13 @@ function encrypt!(state::Encryptor, result, data)
 end
 
 function encrypt(state::Encryptor, e::Symbol, iv::Array{UInt8,1}, data)
-    result = Array(UInt8, endof(data))
+    result = Array(UInt8, sizeof(data))
     encrypt!(state, e, iv, result, data)
     return result
 end
 
 function encrypt(state::Encryptor, data)
-    result = Array(UInt8, endof(data))
+    result = Array(UInt8, sizeof(data))
     encrypt!(state, result, data)
     return result
 end
