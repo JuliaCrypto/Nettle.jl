@@ -176,4 +176,9 @@ longiv = Array(UInt8, sizeof(iv) + 1)
 @test_throws ArgumentError encrypt!(enc, :CBC, longiv, result, plaintext)
 @test_throws ArgumentError decrypt!(dec, :CBC, longiv, result, plaintext)
 
+# encrypt!(enc, :GCM, iv, result, plaintext)
+# decrypt!(dec, :CCM, iv, result, plaintext)
+@test_throws ArgumentError encrypt!(enc, :UNKNOWN, iv, result, plaintext)
+@test_throws ArgumentError decrypt!(dec, :UNKNOWN, iv, result, plaintext)
+
 println("Cipher AES256CBC OK.")

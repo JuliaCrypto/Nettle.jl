@@ -73,6 +73,8 @@ function get_cipher_types()
     return _cipher_types
 end
 
+const _cipher_suites = [:CBC] # [:CBC, :GCM, :CCM]
+
 function gen_key32_iv16(pw::Array{UInt8,1}, salt::Array{UInt8,1})
     s1 = digest("MD5", [pw; salt])
     s2 = digest("MD5", [s1; pw; salt])
@@ -148,7 +150,9 @@ function decrypt!(state::Decryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
     if sizeof(iv) != state.cipher_type.block_size
         throw(ArgumentError("Iv must be $(state.cipher_type.block_size) bytes long"))
     end
-    if e != :CBC throw(ArgumentError("now supports CBC only")) end
+    if ! (symbol(uppercase(string(e))) in _cipher_suites)
+        throw(ArgumentError("now supports $(_cipher_suites) only but ':$(e)'"))
+    end
     iiv = copy(iv)
     ccall((:nettle_cbc_decrypt, nettle), Void, (
         Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
@@ -198,7 +202,9 @@ function encrypt!(state::Encryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
     if sizeof(iv) != state.cipher_type.block_size
         throw(ArgumentError("Iv must be $(state.cipher_type.block_size) bytes long"))
     end
-    if e != :CBC throw(ArgumentError("now supports CBC only")) end
+    if ! (symbol(uppercase(string(e))) in _cipher_suites)
+        throw(ArgumentError("now supports $(_cipher_suites) only but ':$(e)'"))
+    end
     iiv = copy(iv)
     ccall((:nettle_cbc_encrypt, nettle), Void, (
         Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
