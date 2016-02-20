@@ -153,6 +153,7 @@ function decrypt!(state::Decryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
     if ! (symbol(uppercase(string(e))) in _cipher_suites)
         throw(ArgumentError("now supports $(_cipher_suites) only but ':$(e)'"))
     end
+if VERSION >= v"0.4.0"
     libnettle = Base.Libdl.dlopen_e(nettle)
     s = symbol("nettle_", lowercase(string(e)), "_decrypt")
     c = Base.Libdl.dlsym(libnettle, s)
@@ -167,6 +168,14 @@ function decrypt!(state::Decryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
         state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
         sizeof(data), pointer(result), pointer(data))
     Base.Libdl.dlclose(libnettle)
+else
+    iiv = copy(iv)
+    ccall((:nettle_cbc_decrypt, nettle), Void, (
+        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
+        Csize_t, Ptr{UInt8}, Ptr{UInt8}),
+        state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
+        sizeof(data), pointer(result), pointer(data))
+end
     return result
 end
 
@@ -213,6 +222,7 @@ function encrypt!(state::Encryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
     if ! (symbol(uppercase(string(e))) in _cipher_suites)
         throw(ArgumentError("now supports $(_cipher_suites) only but ':$(e)'"))
     end
+if VERSION >= v"0.4.0"
     libnettle = Base.Libdl.dlopen_e(nettle)
     s = symbol("nettle_", lowercase(string(e)), "_encrypt")
     c = Base.Libdl.dlsym(libnettle, s)
@@ -227,6 +237,14 @@ function encrypt!(state::Encryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
         state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,
         sizeof(data), pointer(result), pointer(data))
     Base.Libdl.dlclose(libnettle)
+else
+    iiv = copy(iv)
+    ccall((:nettle_cbc_encrypt, nettle), Void, (
+        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
+        Csize_t, Ptr{UInt8}, Ptr{UInt8}),
+        state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,
+        sizeof(data), pointer(result), pointer(data))
+end
     return result
 end
 
