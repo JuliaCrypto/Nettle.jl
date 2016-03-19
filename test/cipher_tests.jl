@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # AES tests from:
 # https://git.lysator.liu.se/nettle/nettle/blob/master/testsuite/aes-test.c
 
@@ -65,11 +66,41 @@ end
 key = "this key's exactly 32 bytes long"
 enc = Encryptor("AES256", key)
 plaintext = "this is 16 chars"
-ciphertext = encrypt(enc, plaintext)
+ciphertext = encrypt(enc, plaintext.data)
 
 dec = Decryptor("AES256", key)
 deciphertext = decrypt(dec, ciphertext)
-plaintext == bytestring(deciphertext)
+@test plaintext.data == deciphertext # no bytestring
+
+willcauseassertion = "this is 16 (∀).." # case of length(::UTF8String) == 16
+@test length(willcauseassertion) == 16
+@test sizeof(willcauseassertion) == 18
+# @test_throws AssertionError willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion)) # can not catch this c assertion
+@test_throws ArgumentError willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion))
+# @test_throws AssertionError willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion.data)) # can not catch this c assertion
+@test_throws ArgumentError willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion.data))
+
+willbebroken = "this is 16 (∀)" # case of length(::UTF8String) != 16
+@test length(willbebroken) == 14
+@test sizeof(willbebroken) == 16
+@test willbebroken.data == decrypt(dec, encrypt(enc, willbebroken))
+@test willbebroken == bytestring(decrypt(dec, encrypt(enc, willbebroken)))
+@test willbebroken.data == decrypt(dec, encrypt(enc, willbebroken.data))
+@test willbebroken == bytestring(decrypt(dec, encrypt(enc, willbebroken.data)))
+
+criticalbytes = hex2bytes("6e6f74555446382855aa552de2888029")
+@test length(criticalbytes) == 16
+@test sizeof(criticalbytes) == 16
+@test criticalbytes == decrypt(dec, encrypt(enc, criticalbytes))
+
+# This one will pass, but may be caught UnicodeError exception when evaluate it by julia ide.
+dummy = bytestring(decrypt(dec, encrypt(enc, criticalbytes)))
+@test isa(dummy, AbstractString)
+@test !isa(dummy, ASCIIString)
+@test isa(dummy, UTF8String) # gray zone
+@test sizeof(dummy) == 16
+@test length(dummy.data) == 16
+@test length(dummy) != 16
 
 
 # Test errors
@@ -81,7 +112,7 @@ plaintext == bytestring(deciphertext)
 
 enc = Encryptor("AES256", key)
 dec = Decryptor("AES256", key)
-result = Array(UInt8, length(plaintext) - 1)
+result = Array(UInt8, sizeof(plaintext) - 1)
 @test_throws ArgumentError encrypt!(enc, result, plaintext)
 @test_throws ArgumentError decrypt!(dec, result, plaintext)
 
@@ -90,3 +121,64 @@ println("Testing cipher show methods:")
 println(get_cipher_types()["AES256"])
 println(Encryptor("AES256", key))
 println(Decryptor("AES256", key))
+
+println("Testing cipher AES256CBC:")
+# AES256CBC
+for (pw,salt,iv,key,text,encrypted) in [
+    (
+        "Secret Passphrase",
+        "a3e550e89e70996c",
+        "7c7ed9434ddb9c2d1e1fcc38b4bf4667",
+        "e299ff9d8e4831f07e5323913c53e5f0fec3a040a211d6562fa47607244d0051",
+        "4d657373616765",
+        "da8aab1b904205a7e49c1ecc7118a8f4",
+    ),(
+        "Secret Passphrase",
+        "a3e550e89e70996c",
+        "7c7ed9434ddb9c2d1e1fcc38b4bf4667",
+        "e299ff9d8e4831f07e5323913c53e5f0fec3a040a211d6562fa47607244d0051",
+        "4d657373616765090909090909090909",
+        "da8aab1b904205a7e49c1ecc7118a8f4804bef7be79216196739de7845da182d",
+    )
+]
+    (key32, iv16) = (hex2bytes(key), hex2bytes(iv))
+    @test gen_key32_iv16(pw.data, hex2bytes(salt)) == (key32, iv16)
+    @test encrypt("aes256", :CBC, iv16, key32, add_padding_PKCS5(hex2bytes(text), 16)) == hex2bytes(encrypted)
+    @test trim_padding_PKCS5(decrypt("aes256", :CBC, iv16, key32, hex2bytes(encrypted))) == hex2bytes(text)
+end
+
+# Test errors
+badkey = "this key's exactly 32(∪∩∀ДЯ)...."
+@test length(badkey) == 32
+@test sizeof(badkey) == 40
+@test_throws ArgumentError Encryptor("AES256", badkey)
+@test_throws ArgumentError Decryptor("AES256", badkey)
+
+iv = "this is 16 chars".data
+key = "this key's exactly 32 bytes long".data
+enc = Encryptor("AES256", key)
+dec = Decryptor("AES256", key)
+shortresult = Array(UInt8, sizeof(plaintext) - 1)
+@test_throws ArgumentError encrypt!(enc, :CBC, iv, shortresult, plaintext)
+@test_throws ArgumentError decrypt!(dec, :CBC, iv, shortresult, plaintext)
+result = Array(UInt8, sizeof(plaintext))
+shorttext = Array(UInt8, sizeof(plaintext) - 1)
+@test_throws ArgumentError encrypt!(enc, :CBC, iv, result, shorttext)
+@test_throws ArgumentError decrypt!(dec, :CBC, iv, result, shorttext)
+longresult = Array(UInt8, sizeof(plaintext) + 1)
+longtext = Array(UInt8, sizeof(plaintext) + 1)
+@test_throws ArgumentError encrypt!(enc, :CBC, iv, longresult, longtext)
+@test_throws ArgumentError decrypt!(dec, :CBC, iv, longresult, longtext)
+shortiv = Array(UInt8, sizeof(iv) - 1)
+@test_throws ArgumentError encrypt!(enc, :CBC, shortiv, result, plaintext)
+@test_throws ArgumentError decrypt!(dec, :CBC, shortiv, result, plaintext)
+longiv = Array(UInt8, sizeof(iv) + 1)
+@test_throws ArgumentError encrypt!(enc, :CBC, longiv, result, plaintext)
+@test_throws ArgumentError decrypt!(dec, :CBC, longiv, result, plaintext)
+
+# encrypt!(enc, :GCM, iv, result, plaintext)
+# decrypt!(dec, :CCM, iv, result, plaintext)
+@test_throws ArgumentError encrypt!(enc, :UNKNOWN, iv, result, plaintext)
+@test_throws ArgumentError decrypt!(dec, :UNKNOWN, iv, result, plaintext)
+
+println("Cipher AES256CBC OK.")

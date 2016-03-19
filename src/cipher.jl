@@ -3,7 +3,9 @@
 #http://www.lysator.liu.se/~nisse/nettle/nettle.html#Cipher-functions
 
 import Base: show
-export CipherType, get_cipher_types, Encryptor, Decryptor, decrypt, decrypt!, encrypt, encrypt!
+export CipherType, get_cipher_types
+export gen_key32_iv16, add_padding_PKCS5, trim_padding_PKCS5
+export Encryptor, Decryptor, decrypt, decrypt!, encrypt, encrypt!
 
 # This is a mirror of the nettle-meta.h:nettle_cipher struct
 immutable NettleCipher
@@ -71,6 +73,25 @@ function get_cipher_types()
     return _cipher_types
 end
 
+const _cipher_suites = [:CBC] # [:CBC, :GCM, :CCM]
+
+function gen_key32_iv16(pw::Array{UInt8,1}, salt::Array{UInt8,1})
+    s1 = digest("MD5", [pw; salt])
+    s2 = digest("MD5", [s1; pw; salt])
+    s3 = digest("MD5", [s2; pw; salt])
+    return ([s1; s2], s3)
+end
+
+function add_padding_PKCS5(data::Array{UInt8,1}, block_size::Int)
+  padlen = block_size - (sizeof(data) % block_size)
+  # return [data; map(i -> UInt8(padlen), 1:padlen)]
+  return [data; convert(Array{UInt8,1}, map(i -> padlen, 1:padlen))] # to pass test julia 0.3
+end
+
+function trim_padding_PKCS5(data::Array{UInt8,1})
+  padlen = data[sizeof(data)]
+  return data[1:sizeof(data)-padlen]
+end
 
 function Encryptor(name::AbstractString, key)
     cipher_types = get_cipher_types()
@@ -80,7 +101,7 @@ function Encryptor(name::AbstractString, key)
     end
     cipher_type = cipher_types[name]
 
-    if length(key) != cipher_type.key_size
+    if sizeof(key) != cipher_type.key_size
         throw(ArgumentError("Key must be $(cipher_type.key_size) bytes long"))
     end
 
@@ -88,7 +109,7 @@ function Encryptor(name::AbstractString, key)
     if nettle_major_version >= 3
         ccall( cipher_type.set_encrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
     else
-        ccall( cipher_type.set_encrypt_key, Void, (Ptr{Void}, Cuint, Ptr{UInt8}), state, length(key), pointer(key))
+        ccall( cipher_type.set_encrypt_key, Void, (Ptr{Void}, Cuint, Ptr{UInt8}), state, sizeof(key), pointer(key))
     end
 
     return Encryptor(cipher_type, state)
@@ -102,7 +123,7 @@ function Decryptor(name::AbstractString, key)
     end
     cipher_type = cipher_types[name]
 
-    if length(key) != cipher_type.key_size
+    if sizeof(key) != cipher_type.key_size
         throw(ArgumentError("Key must be $(cipher_type.key_size) bytes long"))
     end
 
@@ -110,39 +131,146 @@ function Decryptor(name::AbstractString, key)
     if nettle_major_version >= 3
         ccall( cipher_type.set_decrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
     else
-        ccall( cipher_type.set_decrypt_key, Void, (Ptr{Void}, Cuint, Ptr{UInt8}), state, length(key), pointer(key))
+        ccall( cipher_type.set_decrypt_key, Void, (Ptr{Void}, Cuint, Ptr{UInt8}), state, sizeof(key), pointer(key))
     end
 
     return Decryptor(cipher_type, state)
 end
 
+function decrypt!(state::Decryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
+    if sizeof(result) < sizeof(data)
+        throw(ArgumentError("Output array of length $(sizeof(result)) insufficient for input data length ($(sizeof(data)))"))
+    end
+    if sizeof(result) % state.cipher_type.block_size > 0
+        throw(ArgumentError("Output array of length $(sizeof(result)) must be N times $(state.cipher_type.block_size) bytes long"))
+    end
+    if sizeof(data) % state.cipher_type.block_size > 0
+        throw(ArgumentError("Input array of length $(sizeof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
+    end
+    if sizeof(iv) != state.cipher_type.block_size
+        throw(ArgumentError("Iv must be $(state.cipher_type.block_size) bytes long"))
+    end
+    if ! (symbol(uppercase(string(e))) in _cipher_suites)
+        throw(ArgumentError("now supports $(_cipher_suites) only but ':$(e)'"))
+    end
+if VERSION >= v"0.4.0"
+    libnettle = Base.Libdl.dlopen_e(nettle)
+    s = symbol("nettle_", lowercase(string(e)), "_decrypt")
+    c = Base.Libdl.dlsym(libnettle, s)
+    if c == C_NULL
+        throw(ArgumentError("not found function '$(s)' for ':$(e)'"))
+    end
+    # c points (:nettle_***_decrypt, nettle) may be loaded as another instance
+    iiv = copy(iv)
+    ccall(c, Void, (
+        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
+        Csize_t, Ptr{UInt8}, Ptr{UInt8}),
+        state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
+        sizeof(data), pointer(result), pointer(data))
+    Base.Libdl.dlclose(libnettle)
+else
+    iiv = copy(iv)
+    ccall((:nettle_cbc_decrypt, nettle), Void, (
+        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
+        Csize_t, Ptr{UInt8}, Ptr{UInt8}),
+        state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
+        sizeof(data), pointer(result), pointer(data))
+end
+    return result
+end
+
 function decrypt!(state::Decryptor, result, data)
-    if length(result) < length(data)
-        throw(ArgumentError("Output array of length $(length(result)) insufficient for input data length ($(length(data)))"))
+    if sizeof(result) < sizeof(data)
+        throw(ArgumentError("Output array of length $(sizeof(result)) insufficient for input data length ($(sizeof(data)))"))
+    end
+    if sizeof(result) % state.cipher_type.block_size > 0
+        throw(ArgumentError("Output array of length $(sizeof(result)) must be N times $(state.cipher_type.block_size) bytes long"))
+    end
+    if sizeof(data) % state.cipher_type.block_size > 0
+        throw(ArgumentError("Input array of length $(sizeof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
     end
     ccall(state.cipher_type.decrypt, Void, (Ptr{Void},Csize_t,Ptr{UInt8},Ptr{UInt8}),
         state.state, sizeof(data), pointer(result), pointer(data))
     return result
 end
 
+function decrypt(state::Decryptor, e::Symbol, iv::Array{UInt8,1}, data)
+    result = Array(UInt8, sizeof(data))
+    decrypt!(state, e, iv, result, data)
+    return result
+end
+
 function decrypt(state::Decryptor, data)
-    result = Array(UInt8, length(data))
+    result = Array(UInt8, sizeof(data))
     decrypt!(state, result, data)
     return result
 end
 
+function encrypt!(state::Encryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
+    if sizeof(result) < sizeof(data)
+        throw(ArgumentError("Output array of length $(sizeof(result)) insufficient for input data length ($(sizeof(data)))"))
+    end
+    if sizeof(result) % state.cipher_type.block_size > 0
+        throw(ArgumentError("Output array of length $(sizeof(result)) must be N times $(state.cipher_type.block_size) bytes long"))
+    end
+    if sizeof(data) % state.cipher_type.block_size > 0
+        throw(ArgumentError("Input array of length $(sizeof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
+    end
+    if sizeof(iv) != state.cipher_type.block_size
+        throw(ArgumentError("Iv must be $(state.cipher_type.block_size) bytes long"))
+    end
+    if ! (symbol(uppercase(string(e))) in _cipher_suites)
+        throw(ArgumentError("now supports $(_cipher_suites) only but ':$(e)'"))
+    end
+if VERSION >= v"0.4.0"
+    libnettle = Base.Libdl.dlopen_e(nettle)
+    s = symbol("nettle_", lowercase(string(e)), "_encrypt")
+    c = Base.Libdl.dlsym(libnettle, s)
+    if c == C_NULL
+        throw(ArgumentError("not found function '$(s)' for ':$(e)'"))
+    end
+    # c points (:nettle_***_encrypt, nettle) may be loaded as another instance
+    iiv = copy(iv)
+    ccall(c, Void, (
+        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
+        Csize_t, Ptr{UInt8}, Ptr{UInt8}),
+        state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,
+        sizeof(data), pointer(result), pointer(data))
+    Base.Libdl.dlclose(libnettle)
+else
+    iiv = copy(iv)
+    ccall((:nettle_cbc_encrypt, nettle), Void, (
+        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
+        Csize_t, Ptr{UInt8}, Ptr{UInt8}),
+        state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,
+        sizeof(data), pointer(result), pointer(data))
+end
+    return result
+end
 
 function encrypt!(state::Encryptor, result, data)
-    if length(result) < length(data)
-        throw(ArgumentError("Output array of length $(length(result)) insufficient for input data length ($(length(data)))"))
+    if sizeof(result) < sizeof(data)
+        throw(ArgumentError("Output array of length $(sizeof(result)) insufficient for input data length ($(sizeof(data)))"))
+    end
+    if sizeof(result) % state.cipher_type.block_size > 0
+        throw(ArgumentError("Output array of length $(sizeof(result)) must be N times $(state.cipher_type.block_size) bytes long"))
+    end
+    if sizeof(data) % state.cipher_type.block_size > 0
+        throw(ArgumentError("Input array of length $(sizeof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
     end
     ccall(state.cipher_type.encrypt, Void, (Ptr{Void},Csize_t,Ptr{UInt8},Ptr{UInt8}),
         state.state, sizeof(data), pointer(result), pointer(data))
     return result
 end
 
+function encrypt(state::Encryptor, e::Symbol, iv::Array{UInt8,1}, data)
+    result = Array(UInt8, sizeof(data))
+    encrypt!(state, e, iv, result, data)
+    return result
+end
+
 function encrypt(state::Encryptor, data)
-    result = Array(UInt8, length(data))
+    result = Array(UInt8, sizeof(data))
     encrypt!(state, result, data)
     return result
 end
@@ -150,6 +278,9 @@ end
 # The one-shot functions that make this whole thing so easy
 decrypt(name::AbstractString, key, data) = decrypt(Decryptor(name, key), data)
 encrypt(name::AbstractString, key, data) = encrypt(Encryptor(name, key), data)
+
+decrypt(name::AbstractString, e::Symbol, iv::Array{UInt8,1}, key, data) = decrypt(Decryptor(name, key), e, iv, data)
+encrypt(name::AbstractString, e::Symbol, iv::Array{UInt8,1}, key, data) = encrypt(Encryptor(name, key), e, iv, data)
 
 # Custom show overrides make this package have a little more pizzaz!
 function show(io::IO, x::CipherType)
