@@ -42,7 +42,9 @@ hexdigest!(state::Hasher) = bytes2hex(digest!(state))
 
 # The one-shot functions that makes this whole thing so easy.
 digest(hash_name::AbstractString, data) = digest!(update!(Hasher(hash_name), data))
+digest(hash_name::AbstractString, io::IO) = digest(hash_name, readall(io))
 hexdigest(hash_name::AbstractString, data) = hexdigest!(update!(Hasher(hash_name), data))
+hexdigest(hash_name::AbstractString, io::IO) = hexdigest(hash_name, readall(io))
 
 # Custom show overrides make this package have a little more pizzaz!
 function show(io::IO, x::HashType)
