@@ -17,6 +17,7 @@ end
 
 provides( AptGet, "libnettle4", nettle )
 provides( Yum, "nettle", nettle )
+provides( Zypper, "libnettle", nettle )
 
 julia_usrdir = normpath(JULIA_HOME*"/../") # This is a stopgap, we need a better built-in solution to get the included libraries
 libdirs = AbstractString["$(julia_usrdir)/lib"]
