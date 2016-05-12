@@ -72,7 +72,7 @@ dec = Decryptor("AES256", key)
 deciphertext = decrypt(dec, ciphertext)
 @test plaintext.data == deciphertext # no bytestring
 
-willcauseassertion = "this is 16 (∀).." # case of length(::UTF8String) == 16
+willcauseassertion = "this is 16 (∀).." # case of length(::String) == 16
 @test length(willcauseassertion) == 16
 @test sizeof(willcauseassertion) == 18
 # @test_throws AssertionError willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion)) # can not catch this c assertion
@@ -80,7 +80,7 @@ willcauseassertion = "this is 16 (∀).." # case of length(::UTF8String) == 16
 # @test_throws AssertionError willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion.data)) # can not catch this c assertion
 @test_throws ArgumentError willcauseassertion.data == decrypt(dec, encrypt(enc, willcauseassertion.data))
 
-willbebroken = "this is 16 (∀)" # case of length(::UTF8String) != 16
+willbebroken = "this is 16 (∀)" # case of length(::String) != 16
 @test length(willbebroken) == 14
 @test sizeof(willbebroken) == 16
 @test willbebroken.data == decrypt(dec, encrypt(enc, willbebroken))
@@ -96,8 +96,10 @@ criticalbytes = hex2bytes("6e6f74555446382855aa552de2888029")
 # This one will pass, but may be caught UnicodeError exception when evaluate it by julia ide.
 dummy = bytestring(decrypt(dec, encrypt(enc, criticalbytes)))
 @test isa(dummy, AbstractString)
-@test !isa(dummy, ASCIIString)
-@test isa(dummy, UTF8String) # gray zone
+if !isdefined(Core, :String) || !isdefined(Core, :AbstractString)
+    @test !isa(dummy, ASCIIString)
+end
+@test isa(dummy, Compat.UTF8String) # gray zone
 @test sizeof(dummy) == 16
 @test length(dummy.data) == 16
 @test length(dummy) != 16
