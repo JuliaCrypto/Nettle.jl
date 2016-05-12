@@ -150,12 +150,12 @@ function decrypt!(state::Decryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
     if sizeof(iv) != state.cipher_type.block_size
         throw(ArgumentError("Iv must be $(state.cipher_type.block_size) bytes long"))
     end
-    if ! (symbol(uppercase(string(e))) in _cipher_suites)
+    @compat if ! (Symbol(uppercase(string(e))) in _cipher_suites)
         throw(ArgumentError("now supports $(_cipher_suites) only but ':$(e)'"))
     end
 if VERSION >= v"0.4.0"
     libnettle = Base.Libdl.dlopen_e(nettle)
-    s = symbol("nettle_", lowercase(string(e)), "_decrypt")
+    s = Symbol("nettle_", lowercase(string(e)), "_decrypt")
     c = Base.Libdl.dlsym(libnettle, s)
     if c == C_NULL
         throw(ArgumentError("not found function '$(s)' for ':$(e)'"))
@@ -219,12 +219,12 @@ function encrypt!(state::Encryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
     if sizeof(iv) != state.cipher_type.block_size
         throw(ArgumentError("Iv must be $(state.cipher_type.block_size) bytes long"))
     end
-    if ! (symbol(uppercase(string(e))) in _cipher_suites)
+    @compat if ! (Symbol(uppercase(string(e))) in _cipher_suites)
         throw(ArgumentError("now supports $(_cipher_suites) only but ':$(e)'"))
     end
 if VERSION >= v"0.4.0"
     libnettle = Base.Libdl.dlopen_e(nettle)
-    s = symbol("nettle_", lowercase(string(e)), "_encrypt")
+    s = Symbol("nettle_", lowercase(string(e)), "_encrypt")
     c = Base.Libdl.dlsym(libnettle, s)
     if c == C_NULL
         throw(ArgumentError("not found function '$(s)' for ':$(e)'"))
