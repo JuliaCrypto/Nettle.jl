@@ -97,9 +97,9 @@ criticalbytes = hex2bytes("6e6f74555446382855aa552de2888029")
 dummy = bytestring(decrypt(dec, encrypt(enc, criticalbytes)))
 @test isa(dummy, AbstractString)
 if !isdefined(Core, :String) || !isdefined(Core, :AbstractString)
-    @test !isa(dummy, ASCIIString)
+    @test !isa(dummy, String)
 end
-@test isa(dummy, Compat.UTF8String) # gray zone
+@test isa(dummy, String) # gray zone
 @test sizeof(dummy) == 16
 @test length(dummy.data) == 16
 @test length(dummy) != 16

@@ -17,7 +17,7 @@ end
 # This cuts down on the amount of work we have to do for some operations
 # (especially HMAC operations) at the cost of a bit of memory.  I'll take it.
 immutable HashType
-    name::Compat.ASCIIString
+    name::String
     context_size::Cuint
     digest_size::Cuint
     block_size::Cuint
