@@ -43,7 +43,7 @@ end
 
 # The function that maps from a NettleCipher to a CipherType
 function CipherType(nc::NettleCipher)
-    CipherType( uppercase(bytestring(nc.name)),
+    CipherType( uppercase(unsafe_string(nc.name)),
                 nc.context_size, nc.block_size, nc.key_size,
                 nc.set_encrypt_key, nc.set_decrypt_key, nc.encrypt, nc.decrypt)
 end

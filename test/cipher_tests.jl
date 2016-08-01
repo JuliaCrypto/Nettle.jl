@@ -84,9 +84,9 @@ willbebroken = "this is 16 (∀)" # case of length(::String) != 16
 @test length(willbebroken) == 14
 @test sizeof(willbebroken) == 16
 @test willbebroken.data == decrypt(dec, encrypt(enc, willbebroken))
-@test willbebroken == bytestring(decrypt(dec, encrypt(enc, willbebroken)))
+@test willbebroken == @compat String(decrypt(dec, encrypt(enc, willbebroken)))
 @test willbebroken.data == decrypt(dec, encrypt(enc, willbebroken.data))
-@test willbebroken == bytestring(decrypt(dec, encrypt(enc, willbebroken.data)))
+@test willbebroken == @compat String(decrypt(dec, encrypt(enc, willbebroken.data)))
 
 criticalbytes = hex2bytes("6e6f74555446382855aa552de2888029")
 @test length(criticalbytes) == 16
@@ -94,7 +94,7 @@ criticalbytes = hex2bytes("6e6f74555446382855aa552de2888029")
 @test criticalbytes == decrypt(dec, encrypt(enc, criticalbytes))
 
 # This one will pass, but may be caught UnicodeError exception when evaluate it by julia ide.
-dummy = bytestring(decrypt(dec, encrypt(enc, criticalbytes)))
+dummy = @compat String(decrypt(dec, encrypt(enc, criticalbytes)))
 @test isa(dummy, AbstractString)
 if !isdefined(Core, :String) || !isdefined(Core, :AbstractString)
     @test !isa(dummy, ASCIIString)

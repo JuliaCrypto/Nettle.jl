@@ -1,6 +1,7 @@
 VERSION >= v"0.4.0-dev+6521" && __precompile__()
 module Nettle
 using Compat
+import Compat.String
 
 # Load libnettle from BinDeps
 const depfile = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
