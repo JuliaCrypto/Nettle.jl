@@ -5,12 +5,12 @@ using Compat
 
 nettle = library_dependency("nettle", aliases = ["libnettle","libnettle-4-6","libnettle-6-1","libnettle-6-2"])
 
-@windows_only begin
+if is_windows()
   using WinRPM
   provides(WinRPM.RPM, "libnettle-6-2", nettle, os = :Windows )
 end
 
-@osx_only begin
+if is_apple()
   using Homebrew
   provides( Homebrew.HB, "nettle", nettle, os = :Darwin )
 end
