@@ -31,7 +31,7 @@ end
 
 # The function that maps from a NettleHash to a HashType
 function HashType(nh::NettleHash, nhptr::Ptr{Void})
-    HashType( uppercase(bytestring(nh.name)),
+    HashType( uppercase(unsafe_string(nh.name)),
                     nh.context_size, nh.digest_size, nh.block_size,
                     nh.init, nh.update, nh.digest, nhptr)
 end
