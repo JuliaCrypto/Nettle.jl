@@ -34,11 +34,11 @@ end
 # These are the user-facing types that are used to actually {en,de}cipher stuff
 immutable Encryptor
     cipher_type::CipherType
-    state::Array{UInt8,1}
+    state::Vector{UInt8}
 end
 immutable Decryptor
     cipher_type::CipherType
-    state::Array{UInt8,1}
+    state::Vector{UInt8}
 end
 
 # The function that maps from a NettleCipher to a CipherType
@@ -75,20 +75,19 @@ end
 
 const _cipher_suites = [:CBC] # [:CBC, :GCM, :CCM]
 
-function gen_key32_iv16(pw::Array{UInt8,1}, salt::Array{UInt8,1})
+function gen_key32_iv16(pw::Vector{UInt8}, salt::Vector{UInt8})
     s1 = digest("MD5", [pw; salt])
     s2 = digest("MD5", [s1; pw; salt])
     s3 = digest("MD5", [s2; pw; salt])
     return ([s1; s2], s3)
 end
 
-function add_padding_PKCS5(data::Array{UInt8,1}, block_size::Int)
+function add_padding_PKCS5(data::Vector{UInt8}, block_size::Int)
   padlen = block_size - (sizeof(data) % block_size)
-  # return [data; map(i -> UInt8(padlen), 1:padlen)]
-  return [data; convert(Array{UInt8,1}, map(i -> padlen, 1:padlen))] # to pass test julia 0.3
+  return [data; map(i -> UInt8(padlen), 1:padlen)]
 end
 
-function trim_padding_PKCS5(data::Array{UInt8,1})
+function trim_padding_PKCS5(data::Vector{UInt8})
   padlen = data[sizeof(data)]
   return data[1:sizeof(data)-padlen]
 end
@@ -105,7 +104,7 @@ function Encryptor(name::AbstractString, key)
         throw(ArgumentError("Key must be $(cipher_type.key_size) bytes long"))
     end
 
-    state = Array(UInt8, cipher_type.context_size)
+    state = Vector{UInt8}(cipher_type.context_size)
     if nettle_major_version >= 3
         ccall( cipher_type.set_encrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
     else
@@ -127,7 +126,7 @@ function Decryptor(name::AbstractString, key)
         throw(ArgumentError("Key must be $(cipher_type.key_size) bytes long"))
     end
 
-    state = Array(UInt8, cipher_type.context_size)
+    state = Vector{UInt8}(cipher_type.context_size)
     if nettle_major_version >= 3
         ccall( cipher_type.set_decrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
     else
@@ -137,7 +136,7 @@ function Decryptor(name::AbstractString, key)
     return Decryptor(cipher_type, state)
 end
 
-function decrypt!(state::Decryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
+function decrypt!(state::Decryptor, e::Symbol, iv::Vector{UInt8}, result, data)
     if sizeof(result) < sizeof(data)
         throw(ArgumentError("Output array of length $(sizeof(result)) insufficient for input data length ($(sizeof(data)))"))
     end
@@ -194,19 +193,19 @@ function decrypt!(state::Decryptor, result, data)
     return result
 end
 
-function decrypt(state::Decryptor, e::Symbol, iv::Array{UInt8,1}, data)
-    result = Array(UInt8, sizeof(data))
+function decrypt(state::Decryptor, e::Symbol, iv::Vector{UInt8}, data)
+    result = Vector{UInt8}(sizeof(data))
     decrypt!(state, e, iv, result, data)
     return result
 end
 
 function decrypt(state::Decryptor, data)
-    result = Array(UInt8, sizeof(data))
+    result = Vector{UInt8}(sizeof(data))
     decrypt!(state, result, data)
     return result
 end
 
-function encrypt!(state::Encryptor, e::Symbol, iv::Array{UInt8,1}, result, data)
+function encrypt!(state::Encryptor, e::Symbol, iv::Vector{UInt8}, result, data)
     if sizeof(result) < sizeof(data)
         throw(ArgumentError("Output array of length $(sizeof(result)) insufficient for input data length ($(sizeof(data)))"))
     end
@@ -263,14 +262,14 @@ function encrypt!(state::Encryptor, result, data)
     return result
 end
 
-function encrypt(state::Encryptor, e::Symbol, iv::Array{UInt8,1}, data)
-    result = Array(UInt8, sizeof(data))
+function encrypt(state::Encryptor, e::Symbol, iv::Vector{UInt8}, data)
+    result = Vector{UInt8}(sizeof(data))
     encrypt!(state, e, iv, result, data)
     return result
 end
 
 function encrypt(state::Encryptor, data)
-    result = Array(UInt8, sizeof(data))
+    result = Vector{UInt8}(sizeof(data))
     encrypt!(state, result, data)
     return result
 end
@@ -279,8 +278,8 @@ end
 decrypt(name::AbstractString, key, data) = decrypt(Decryptor(name, key), data)
 encrypt(name::AbstractString, key, data) = encrypt(Encryptor(name, key), data)
 
-decrypt(name::AbstractString, e::Symbol, iv::Array{UInt8,1}, key, data) = decrypt(Decryptor(name, key), e, iv, data)
-encrypt(name::AbstractString, e::Symbol, iv::Array{UInt8,1}, key, data) = encrypt(Encryptor(name, key), e, iv, data)
+decrypt(name::AbstractString, e::Symbol, iv::Vector{UInt8}, key, data) = decrypt(Decryptor(name, key), e, iv, data)
+encrypt(name::AbstractString, e::Symbol, iv::Vector{UInt8}, key, data) = encrypt(Encryptor(name, key), e, iv, data)
 
 # Custom show overrides make this package have a little more pizzaz!
 function show(io::IO, x::CipherType)
