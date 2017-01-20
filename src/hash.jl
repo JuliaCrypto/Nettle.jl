@@ -6,7 +6,7 @@ export Hasher, update!, digest, digest!, hexdigest!, hexdigest
 
 immutable Hasher
     hash_type::HashType
-    state::Array{UInt8,1}
+    state::Vector{UInt8}
 end
 
 # Constructor for Hasher
@@ -19,7 +19,7 @@ function Hasher(name::AbstractString)
 
     # Construct Hasher object for this type and initialize using Nettle's init functions
     hash_type = hash_types[name]
-    state = Array(UInt8, hash_type.context_size)
+    state = Vector{UInt8}(hash_type.context_size)
     ccall(hash_type.init, Void, (Ptr{Void},), state)
     return Hasher(hash_type, state)
 end
@@ -32,7 +32,7 @@ end
 
 # Spit out a digest of the current hash state and reset it
 function digest!(state::Hasher)
-    digest = Array(UInt8, state.hash_type.digest_size)
+    digest = Vector{UInt8}(state.hash_type.digest_size)
     ccall(state.hash_type.digest, Void, (Ptr{Void},UInt32,Ptr{UInt8}), state.state, sizeof(digest), pointer(digest))
     return digest
 end
