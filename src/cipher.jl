@@ -60,7 +60,7 @@ function get_cipher_types()
         cipher_idx = 1
         # nettle_ciphers is an array of pointers ended by a NULL pointer, continue reading hash types until we hit it
         while( true )
-            ncptr = unsafe_load(cglobal(("nettle_ciphers",nettle),Ptr{Ptr{Void}}),cipher_idx)
+            ncptr = unsafe_load(cglobal(("nettle_ciphers",libnettle),Ptr{Ptr{Void}}),cipher_idx)
             if ncptr == C_NULL
                 break
             end
@@ -153,9 +153,9 @@ function decrypt!(state::Decryptor, e::Symbol, iv::Vector{UInt8}, result, data)
         throw(ArgumentError("now supports $(_cipher_suites) only but ':$(e)'"))
     end
 if VERSION >= v"0.4.0"
-    libnettle = Base.Libdl.dlopen_e(nettle)
+    hdl = Libdl.dlopen_e(libnettle)
     s = Symbol("nettle_", lowercase(string(e)), "_decrypt")
-    c = Base.Libdl.dlsym(libnettle, s)
+    c = Libdl.dlsym(hdl, s)
     if c == C_NULL
         throw(ArgumentError("not found function '$(s)' for ':$(e)'"))
     end
@@ -166,10 +166,10 @@ if VERSION >= v"0.4.0"
         Csize_t, Ptr{UInt8}, Ptr{UInt8}),
         state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
         sizeof(data), pointer(result), pointer(data))
-    Base.Libdl.dlclose(libnettle)
+    Libdl.dlclose(hdl)
 else
     iiv = copy(iv)
-    ccall((:nettle_cbc_decrypt, nettle), Void, (
+    ccall((:nettle_cbc_decrypt, libnettle), Void, (
         Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
         Csize_t, Ptr{UInt8}, Ptr{UInt8}),
         state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
@@ -222,9 +222,9 @@ function encrypt!(state::Encryptor, e::Symbol, iv::Vector{UInt8}, result, data)
         throw(ArgumentError("now supports $(_cipher_suites) only but ':$(e)'"))
     end
 if VERSION >= v"0.4.0"
-    libnettle = Base.Libdl.dlopen_e(nettle)
+    hdl = Libdl.dlopen_e(libnettle)
     s = Symbol("nettle_", lowercase(string(e)), "_encrypt")
-    c = Base.Libdl.dlsym(libnettle, s)
+    c = Libdl.dlsym(hdl, s)
     if c == C_NULL
         throw(ArgumentError("not found function '$(s)' for ':$(e)'"))
     end
@@ -235,10 +235,10 @@ if VERSION >= v"0.4.0"
         Csize_t, Ptr{UInt8}, Ptr{UInt8}),
         state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,
         sizeof(data), pointer(result), pointer(data))
-    Base.Libdl.dlclose(libnettle)
+    Libdl.dlclose(hdl)
 else
     iiv = copy(iv)
-    ccall((:nettle_cbc_encrypt, nettle), Void, (
+    ccall((:nettle_cbc_encrypt, libnettle), Void, (
         Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
         Csize_t, Ptr{UInt8}, Ptr{UInt8}),
         state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,

@@ -25,20 +25,20 @@ function HMACState(name::AbstractString, key)
     outer = Vector{UInt8}(hash_type.context_size)
     inner = Vector{UInt8}(hash_type.context_size)
     state = Vector{UInt8}(hash_type.context_size)
-    ccall((:nettle_hmac_set_key,nettle), Void, (Ptr{Void},Ptr{Void},Ptr{Void},Ptr{Void},Csize_t,Ptr{UInt8}),
+    ccall((:nettle_hmac_set_key,libnettle), Void, (Ptr{Void},Ptr{Void},Ptr{Void},Ptr{Void},Csize_t,Ptr{UInt8}),
         outer, inner, state, hash_type.ptr, sizeof(key), key)
     return HMACState(hash_type, outer, inner, state)
 end
 
 function update!(state::HMACState, data)
-    ccall((:nettle_hmac_update,nettle), Void, (Ptr{Void},Ptr{Void},Csize_t,Ptr{UInt8}), state.state,
+    ccall((:nettle_hmac_update,libnettle), Void, (Ptr{Void},Ptr{Void},Csize_t,Ptr{UInt8}), state.state,
         state.hash_type.ptr, sizeof(data), data)
     return state
 end
 
 function digest!(state::HMACState)
     digest = Vector{UInt8}(state.hash_type.digest_size)
-    ccall((:nettle_hmac_digest,nettle), Void, (Ptr{Void},Ptr{Void},Ptr{Void},Ptr{Void}, Csize_t,
+    ccall((:nettle_hmac_digest,libnettle), Void, (Ptr{Void},Ptr{Void},Ptr{Void},Ptr{Void}, Csize_t,
         Ptr{UInt8}), state.outer, state.inner, state.state, state.hash_type.ptr, sizeof(digest), digest)
     return digest
 end
