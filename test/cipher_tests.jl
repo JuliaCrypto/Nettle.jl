@@ -99,7 +99,7 @@ dummy = String(decrypt(dec, encrypt(enc, criticalbytes)))
 if !isdefined(Core, :String) || !isdefined(Core, :AbstractString)
     @test !isa(dummy, ASCIIString)
 end
-@test isa(dummy, Compat.UTF8String) # gray zone
+@test isa(dummy, String) # gray zone
 @test sizeof(dummy) == 16
 @test length(Vector{UInt8}(dummy)) == 16
 @test length(dummy) != 16
