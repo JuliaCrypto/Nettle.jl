@@ -5,7 +5,7 @@
 import Base: show
 export HMACState, update!, digest, digest!, hexdigest!, hexdigest
 
-immutable HMACState
+struct HMACState
     hash_type::HashType
     outer::Vector{UInt8}
     inner::Vector{UInt8}
@@ -25,29 +25,23 @@ function HMACState(name::AbstractString, key)
     outer = Vector{UInt8}(hash_type.context_size)
     inner = Vector{UInt8}(hash_type.context_size)
     state = Vector{UInt8}(hash_type.context_size)
-    ccall((:nettle_hmac_set_key,libnettle), Void, (Ptr{Void},Ptr{Void},Ptr{Void},Ptr{Void},Csize_t,Ptr{UInt8}),
+    ccall((:nettle_hmac_set_key,nettle), Nothing, (Ptr{Nothing},Ptr{Nothing},Ptr{Nothing},Ptr{Nothing},Csize_t,Ptr{UInt8}),
         outer, inner, state, hash_type.ptr, sizeof(key), key)
     return HMACState(hash_type, outer, inner, state)
 end
 
 function update!(state::HMACState, data)
-    ccall((:nettle_hmac_update,libnettle), Void, (Ptr{Void},Ptr{Void},Csize_t,Ptr{UInt8}), state.state,
+    ccall((:nettle_hmac_update,nettle), Nothing, (Ptr{Nothing},Ptr{Nothing},Csize_t,Ptr{UInt8}), state.state,
         state.hash_type.ptr, sizeof(data), data)
     return state
 end
 
 function digest!(state::HMACState)
     digest = Vector{UInt8}(state.hash_type.digest_size)
-    ccall((:nettle_hmac_digest,libnettle), Void, (Ptr{Void},Ptr{Void},Ptr{Void},Ptr{Void}, Csize_t,
+    ccall((:nettle_hmac_digest,nettle), Nothing, (Ptr{Nothing},Ptr{Nothing},Ptr{Nothing},Ptr{Nothing}, Csize_t,
         Ptr{UInt8}), state.outer, state.inner, state.state, state.hash_type.ptr, sizeof(digest), digest)
     return digest
 end
 
 # Take a digest, and convert it to a printable hex representation
-hexdigest!(state::HMACState) = bytes2hex(digest!(state))
 
-# The one-shot functions that makes this whole thing so easy
-digest(hmac_name::AbstractString, key, data) = digest!(update!(HMACState(hmac_name, key), data))
-hexdigest(hmac_name::AbstractString, key, data) = hexdigest!(update!(HMACState(hmac_name, key), data))
-
-show(io::IO, x::HMACState) = write(io, "$(x.hash_type.name) HMAC state")

@@ -8,35 +8,35 @@ export gen_key32_iv16, add_padding_PKCS5, trim_padding_PKCS5
 export Encryptor, Decryptor, decrypt, decrypt!, encrypt, encrypt!
 
 # This is a mirror of the nettle-meta.h:nettle_cipher struct
-immutable NettleCipher
+struct NettleCipher
     name::Ptr{UInt8}
     context_size::Cuint
     block_size::Cuint
     key_size::Cuint
-    set_encrypt_key::Ptr{Void}
-    set_decrypt_key::Ptr{Void}
-    encrypt::Ptr{Void}
-    decrypt::Ptr{Void}
+    set_encrypt_key::Ptr{Nothing}
+    set_decrypt_key::Ptr{Nothing}
+    encrypt::Ptr{Nothing}
+    decrypt::Ptr{Nothing}
 end
 
 # For much the same reasons as in hash_common.jl, we define a separate, more "Julia friendly" type
-immutable CipherType
+struct CipherType
     name::AbstractString
     context_size::Cuint
     block_size::Cuint
     key_size::Cuint
-    set_encrypt_key::Ptr{Void}
-    set_decrypt_key::Ptr{Void}
-    encrypt::Ptr{Void}
-    decrypt::Ptr{Void}
+    set_encrypt_key::Ptr{Nothing}
+    set_decrypt_key::Ptr{Nothing}
+    encrypt::Ptr{Nothing}
+    decrypt::Ptr{Nothing}
 end
 
 # These are the user-facing types that are used to actually {en,de}cipher stuff
-immutable Encryptor
+struct Encryptor
     cipher_type::CipherType
     state::Vector{UInt8}
 end
-immutable Decryptor
+struct Decryptor
     cipher_type::CipherType
     state::Vector{UInt8}
 end
@@ -60,7 +60,11 @@ function get_cipher_types()
         cipher_idx = 1
         # nettle_ciphers is an array of pointers ended by a NULL pointer, continue reading hash types until we hit it
         while( true )
+<<<<<<< HEAD
             ncptr = unsafe_load(cglobal(("nettle_ciphers",libnettle),Ptr{Ptr{Void}}),cipher_idx)
+=======
+            ncptr = unsafe_load(cglobal(("nettle_ciphers",nettle),Ptr{Ptr{Nothing}}),cipher_idx)
+>>>>>>> Deprecation warnings to catch up to 0.7
             if ncptr == C_NULL
                 break
             end
@@ -105,7 +109,15 @@ function Encryptor(name::AbstractString, key)
     end
 
     state = Vector{UInt8}(cipher_type.context_size)
+<<<<<<< HEAD
     ccall( cipher_type.set_encrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
+=======
+    if nettle_major_version >= 3
+        ccall( cipher_type.set_encrypt_key, Nothing, (Ptr{Nothing}, Ptr{UInt8}), state, pointer(key))
+    else
+        ccall( cipher_type.set_encrypt_key, Nothing, (Ptr{Nothing}, Cuint, Ptr{UInt8}), state, sizeof(key), pointer(key))
+    end
+>>>>>>> Deprecation warnings to catch up to 0.7
 
     return Encryptor(cipher_type, state)
 end
@@ -123,7 +135,15 @@ function Decryptor(name::AbstractString, key)
     end
 
     state = Vector{UInt8}(cipher_type.context_size)
+<<<<<<< HEAD
     ccall( cipher_type.set_decrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
+=======
+    if nettle_major_version >= 3
+        ccall( cipher_type.set_decrypt_key, Nothing, (Ptr{Nothing}, Ptr{UInt8}), state, pointer(key))
+    else
+        ccall( cipher_type.set_decrypt_key, Nothing, (Ptr{Nothing}, Cuint, Ptr{UInt8}), state, sizeof(key), pointer(key))
+    end
+>>>>>>> Deprecation warnings to catch up to 0.7
 
     return Decryptor(cipher_type, state)
 end
@@ -153,16 +173,21 @@ if VERSION >= v"0.4.0"
     end
     # c points (:nettle_***_decrypt, nettle) may be loaded as another instance
     iiv = copy(iv)
-    ccall(c, Void, (
-        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
+    ccall(c, Nothing, (
+        Ptr{Nothing}, Ptr{Nothing}, Csize_t, Ptr{UInt8},
         Csize_t, Ptr{UInt8}, Ptr{UInt8}),
         state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
         sizeof(data), pointer(result), pointer(data))
     Libdl.dlclose(hdl)
 else
     iiv = copy(iv)
+<<<<<<< HEAD
     ccall((:nettle_cbc_decrypt, libnettle), Void, (
         Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
+=======
+    ccall((:nettle_cbc_decrypt, nettle), Nothing, (
+        Ptr{Nothing}, Ptr{Nothing}, Csize_t, Ptr{UInt8},
+>>>>>>> Deprecation warnings to catch up to 0.7
         Csize_t, Ptr{UInt8}, Ptr{UInt8}),
         state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
         sizeof(data), pointer(result), pointer(data))
@@ -180,7 +205,7 @@ function decrypt!(state::Decryptor, result, data)
     if sizeof(data) % state.cipher_type.block_size > 0
         throw(ArgumentError("Input array of length $(sizeof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
     end
-    ccall(state.cipher_type.decrypt, Void, (Ptr{Void},Csize_t,Ptr{UInt8},Ptr{UInt8}),
+    ccall(state.cipher_type.decrypt, Nothing, (Ptr{Nothing},Csize_t,Ptr{UInt8},Ptr{UInt8}),
         state.state, sizeof(data), pointer(result), pointer(data))
     return result
 end
@@ -222,16 +247,21 @@ if VERSION >= v"0.4.0"
     end
     # c points (:nettle_***_encrypt, nettle) may be loaded as another instance
     iiv = copy(iv)
-    ccall(c, Void, (
-        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
+    ccall(c, Nothing, (
+        Ptr{Nothing}, Ptr{Nothing}, Csize_t, Ptr{UInt8},
         Csize_t, Ptr{UInt8}, Ptr{UInt8}),
         state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,
         sizeof(data), pointer(result), pointer(data))
     Libdl.dlclose(hdl)
 else
     iiv = copy(iv)
+<<<<<<< HEAD
     ccall((:nettle_cbc_encrypt, libnettle), Void, (
         Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
+=======
+    ccall((:nettle_cbc_encrypt, nettle), Nothing, (
+        Ptr{Nothing}, Ptr{Nothing}, Csize_t, Ptr{UInt8},
+>>>>>>> Deprecation warnings to catch up to 0.7
         Csize_t, Ptr{UInt8}, Ptr{UInt8}),
         state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,
         sizeof(data), pointer(result), pointer(data))
@@ -249,7 +279,7 @@ function encrypt!(state::Encryptor, result, data)
     if sizeof(data) % state.cipher_type.block_size > 0
         throw(ArgumentError("Input array of length $(sizeof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
     end
-    ccall(state.cipher_type.encrypt, Void, (Ptr{Void},Csize_t,Ptr{UInt8},Ptr{UInt8}),
+    ccall(state.cipher_type.encrypt, Nothing, (Ptr{Nothing},Csize_t,Ptr{UInt8},Ptr{UInt8}),
         state.state, sizeof(data), pointer(result), pointer(data))
     return result
 end

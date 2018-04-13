@@ -39,5 +39,32 @@ elseif unsatisfied
     error("Your platform $(triplet(platform_key())) is not supported by this package!")
 end
 
+<<<<<<< HEAD
 # Write out a deps.jl file that will contain mappings for our products
 write_deps_file(joinpath(@__DIR__, "deps.jl"), products)
+=======
+provides( AptGet, "libnettle4", nettle )
+provides( Yum, "nettle", nettle )
+
+
+JULIA_HOME = get(ENV, "JULIA_BINDIR", get(ENV, "JULIA_HOME", ""))
+julia_usrdir = normpath(JULIA_HOME*"/../") # This is a stopgap, we need a better built-in solution to get the included libraries
+libdirs = AbstractString["$(julia_usrdir)/lib"]
+includedirs = AbstractString["$(julia_usrdir)/include"]
+env = @compat Dict("HOGWEED_LIBS" => "-L$(libdirs[1]) -L$(BinDeps.libdir(nettle)) -lhogweed -lgmp",
+       "NETTLE_LIBS" => "-L$(libdirs[1]) -L$(BinDeps.libdir(nettle)) -lnettle -lgmp",
+       "LD_LIBRARY_PATH" => join([libdirs[1];BinDeps.libdir(nettle);get(ENV,"LD_LIBRARY_PATH","")],":"))
+
+provides( Sources,
+          URI("http://www.lysator.liu.se/~nisse/archive/nettle-2.7.1.tar.gz"),
+          SHA="bc71ebd43435537d767799e414fce88e521b7278d48c860651216e1fc6555b40",
+          nettle )
+provides( BuildProcess,
+          Autotools(lib_dirs = libdirs,
+                    include_dirs = includedirs,
+                    env = env,
+                    configure_options = ["--disable-openssl", "--libdir=$(BinDeps.libdir(nettle))"]),
+          nettle )
+
+@compat @BinDeps.install Dict(:nettle => :nettle)
+>>>>>>> Deprecation warnings to catch up to 0.7
