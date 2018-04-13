@@ -21,6 +21,7 @@ function __init__()
 end
 
 # SnoopCompile acceleration
+using Libdl
 include("precompile.jl")
 _precompile_()
 

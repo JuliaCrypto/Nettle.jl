@@ -60,11 +60,7 @@ function get_cipher_types()
         cipher_idx = 1
         # nettle_ciphers is an array of pointers ended by a NULL pointer, continue reading hash types until we hit it
         while( true )
-<<<<<<< HEAD
-            ncptr = unsafe_load(cglobal(("nettle_ciphers",libnettle),Ptr{Ptr{Void}}),cipher_idx)
-=======
             ncptr = unsafe_load(cglobal(("nettle_ciphers",nettle),Ptr{Ptr{Nothing}}),cipher_idx)
->>>>>>> Deprecation warnings to catch up to 0.7
             if ncptr == C_NULL
                 break
             end
@@ -109,15 +105,7 @@ function Encryptor(name::AbstractString, key)
     end
 
     state = Vector{UInt8}(cipher_type.context_size)
-<<<<<<< HEAD
-    ccall( cipher_type.set_encrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
-=======
-    if nettle_major_version >= 3
-        ccall( cipher_type.set_encrypt_key, Nothing, (Ptr{Nothing}, Ptr{UInt8}), state, pointer(key))
-    else
-        ccall( cipher_type.set_encrypt_key, Nothing, (Ptr{Nothing}, Cuint, Ptr{UInt8}), state, sizeof(key), pointer(key))
-    end
->>>>>>> Deprecation warnings to catch up to 0.7
+    ccall( cipher_type.set_encrypt_key, Nothing, (Ptr{Nothing}, Ptr{UInt8}), state, pointer(key))
 
     return Encryptor(cipher_type, state)
 end
@@ -135,15 +123,7 @@ function Decryptor(name::AbstractString, key)
     end
 
     state = Vector{UInt8}(cipher_type.context_size)
-<<<<<<< HEAD
-    ccall( cipher_type.set_decrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
-=======
-    if nettle_major_version >= 3
-        ccall( cipher_type.set_decrypt_key, Nothing, (Ptr{Nothing}, Ptr{UInt8}), state, pointer(key))
-    else
-        ccall( cipher_type.set_decrypt_key, Nothing, (Ptr{Nothing}, Cuint, Ptr{UInt8}), state, sizeof(key), pointer(key))
-    end
->>>>>>> Deprecation warnings to catch up to 0.7
+    ccall( cipher_type.set_decrypt_key, Nothing, (Ptr{Nothing}, Ptr{UInt8}), state, pointer(key))
 
     return Decryptor(cipher_type, state)
 end
@@ -181,13 +161,8 @@ if VERSION >= v"0.4.0"
     Libdl.dlclose(hdl)
 else
     iiv = copy(iv)
-<<<<<<< HEAD
-    ccall((:nettle_cbc_decrypt, libnettle), Void, (
-        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
-=======
     ccall((:nettle_cbc_decrypt, nettle), Nothing, (
         Ptr{Nothing}, Ptr{Nothing}, Csize_t, Ptr{UInt8},
->>>>>>> Deprecation warnings to catch up to 0.7
         Csize_t, Ptr{UInt8}, Ptr{UInt8}),
         state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
         sizeof(data), pointer(result), pointer(data))
@@ -255,13 +230,8 @@ if VERSION >= v"0.4.0"
     Libdl.dlclose(hdl)
 else
     iiv = copy(iv)
-<<<<<<< HEAD
-    ccall((:nettle_cbc_encrypt, libnettle), Void, (
-        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
-=======
     ccall((:nettle_cbc_encrypt, nettle), Nothing, (
         Ptr{Nothing}, Ptr{Nothing}, Csize_t, Ptr{UInt8},
->>>>>>> Deprecation warnings to catch up to 0.7
         Csize_t, Ptr{UInt8}, Ptr{UInt8}),
         state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,
         sizeof(data), pointer(result), pointer(data))

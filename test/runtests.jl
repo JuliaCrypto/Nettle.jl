@@ -1,5 +1,5 @@
 using Nettle
-using Base.Test
+using Test
 using Compat
 import Compat.String
 

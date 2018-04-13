@@ -12,14 +12,19 @@ end
 # Constructor for Hasher
 function Hasher(name::AbstractString)
     hash_types = get_hash_types()
+    println(hash_types)
     name = uppercase(name)
+    println(name)
     if !haskey(hash_types, name)
         throw(ArgumentError("Invalid hash type $name: call Nettle.get_hash_types() to see available list"))
     end
 
     # Construct Hasher object for this type and initialize using Nettle's init functions
     hash_type = hash_types[name]
+    println(hash_type)
     state = Vector{UInt8}(hash_type.context_size)
+    println(state)
+    println(hash_type.init)
     ccall(hash_type.init, Nothing, (Ptr{Nothing},), state)
     return Hasher(hash_type, state)
 end
