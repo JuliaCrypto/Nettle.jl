@@ -105,11 +105,7 @@ function Encryptor(name::AbstractString, key)
     end
 
     state = Vector{UInt8}(cipher_type.context_size)
-    if nettle_major_version >= 3
-        ccall( cipher_type.set_encrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
-    else
-        ccall( cipher_type.set_encrypt_key, Void, (Ptr{Void}, Cuint, Ptr{UInt8}), state, sizeof(key), pointer(key))
-    end
+    ccall( cipher_type.set_encrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
 
     return Encryptor(cipher_type, state)
 end
@@ -127,11 +123,7 @@ function Decryptor(name::AbstractString, key)
     end
 
     state = Vector{UInt8}(cipher_type.context_size)
-    if nettle_major_version >= 3
-        ccall( cipher_type.set_decrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
-    else
-        ccall( cipher_type.set_decrypt_key, Void, (Ptr{Void}, Cuint, Ptr{UInt8}), state, sizeof(key), pointer(key))
-    end
+    ccall( cipher_type.set_decrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
 
     return Decryptor(cipher_type, state)
 end
