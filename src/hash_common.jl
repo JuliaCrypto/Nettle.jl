@@ -48,7 +48,7 @@ function get_hash_types()
         hash_idx = 1
         # nettle_hashes is an array of pointers ended by a NULL pointer, continue reading hash types until we hit it
         while( true )
-            nhptr = unsafe_load(cglobal(("nettle_hashes",nettle),Ptr{Ptr{Void}}),hash_idx)
+            nhptr = unsafe_load(cglobal(("nettle_hashes",libnettle),Ptr{Ptr{Void}}),hash_idx)
             if nhptr == C_NULL
                 break
             end
