@@ -4,7 +4,7 @@
 import Base: show
 export Hasher, update!, digest, digest!, hexdigest!, hexdigest
 
-immutable Hasher
+struct Hasher
     hash_type::HashType
     state::Vector{UInt8}
 end
@@ -12,28 +12,33 @@ end
 # Constructor for Hasher
 function Hasher(name::AbstractString)
     hash_types = get_hash_types()
+    println(hash_types)
     name = uppercase(name)
+    println(name)
     if !haskey(hash_types, name)
         throw(ArgumentError("Invalid hash type $name: call Nettle.get_hash_types() to see available list"))
     end
 
     # Construct Hasher object for this type and initialize using Nettle's init functions
     hash_type = hash_types[name]
+    println(hash_type)
     state = Vector{UInt8}(hash_type.context_size)
-    ccall(hash_type.init, Void, (Ptr{Void},), state)
+    println(state)
+    println(hash_type.init)
+    ccall(hash_type.init, Nothing, (Ptr{Nothing},), state)
     return Hasher(hash_type, state)
 end
 
 # Update hash state with new data
 function update!(state::Hasher, data)
-    ccall(state.hash_type.update, Void, (Ptr{Void},Csize_t,Ptr{UInt8}), state.state, sizeof(data), pointer(data))
+    ccall(state.hash_type.update, Nothing, (Ptr{Nothing},Csize_t,Ptr{UInt8}), state.state, sizeof(data), pointer(data))
     return state
 end
 
 # Spit out a digest of the current hash state and reset it
 function digest!(state::Hasher)
     digest = Vector{UInt8}(state.hash_type.digest_size)
-    ccall(state.hash_type.digest, Void, (Ptr{Void},UInt32,Ptr{UInt8}), state.state, sizeof(digest), pointer(digest))
+    ccall(state.hash_type.digest, Nothing, (Ptr{Nothing},UInt32,Ptr{UInt8}), state.state, sizeof(digest), pointer(digest))
     return digest
 end
 
