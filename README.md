@@ -64,7 +64,7 @@ deciphertext = decrypt(dec, ciphertext)
 Vector{UInt8}(plaintext) == deciphertext # no bytestring
 
 # or...
-decrypt("AES256", key, encrypt("AES256", key, plaintext)) == plaintext.data
+decrypt("AES256", key, encrypt("AES256", key, plaintext)) == Vector{UInt8}(plaintext)
 ```
 
 For AES256CBC encrypt/decrypt, generate a pair of key32 and iv16 with salt.
