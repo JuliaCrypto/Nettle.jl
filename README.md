@@ -61,7 +61,7 @@ ciphertext = encrypt(enc, plaintext)
 
 dec = Decryptor("AES256", key)
 deciphertext = decrypt(dec, ciphertext)
-plaintext.data == deciphertext # no bytestring
+Vector{UInt8}(plaintext) == deciphertext # no bytestring
 
 # or...
 decrypt("AES256", key, encrypt("AES256", key, plaintext)) == plaintext.data
@@ -82,7 +82,7 @@ ciphertext = encrypt(enc, :CBC, iv16, add_padding_PKCS5(Vector{UInt8}(plaintext)
 
 dec = Decryptor("AES256", key32)
 deciphertext = decrypt(dec, :CBC, iv16, ciphertext)
-plaintext.data == trim_padding_PKCS5(deciphertext) # no bytestring
+Vector{UInt8}(plaintext) == trim_padding_PKCS5(deciphertext) # no bytestring
 
 # or...
 plainbytes = hex2bytes("414155aa5541416162")
