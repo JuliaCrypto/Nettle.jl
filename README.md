@@ -57,7 +57,7 @@ Nettle also provides encryption and decryption functionality, using the `Encrypt
 key = "this key's exactly 32 bytes long"
 enc = Encryptor("AES256", key)
 plaintext = "this is 16 chars"
-ciphertext = encrypt(enc, plaintext.data)
+ciphertext = encrypt(enc, plaintext)
 
 dec = Decryptor("AES256", key)
 deciphertext = decrypt(dec, ciphertext)
@@ -74,11 +74,11 @@ For AES256CBC encrypt/decrypt, generate a pair of key32 and iv16 with salt.
 ```julia
 passwd = "Secret Passphrase"
 salt = hex2bytes("a3e550e89e70996c") # use random 8 bytes
-(key32, iv16) = gen_key32_iv16(passwd.data, salt)
+(key32, iv16) = gen_key32_iv16(Vector{UInt8}(passwd), salt)
 
 enc = Encryptor("AES256", key32)
 plaintext = "Message"
-ciphertext = encrypt(enc, :CBC, iv16, add_padding_PKCS5(plaintext.data, 16))
+ciphertext = encrypt(enc, :CBC, iv16, add_padding_PKCS5(Vector{UInt8}(plaintext), 16))
 
 dec = Decryptor("AES256", key32)
 deciphertext = decrypt(dec, :CBC, iv16, ciphertext)
