@@ -128,14 +128,14 @@ println("Testing cipher AES256CBC:")
 # AES256CBC
 for (pw,salt,iv,key,text,encrypted) in [
     (
-        b"Secret Passphrase",
+        Vector(b"Secret Passphrase"),
         "a3e550e89e70996c",
         "7c7ed9434ddb9c2d1e1fcc38b4bf4667",
         "e299ff9d8e4831f07e5323913c53e5f0fec3a040a211d6562fa47607244d0051",
         "4d657373616765",
         "da8aab1b904205a7e49c1ecc7118a8f4",
     ),(
-        b"Secret Passphrase",
+        Vector(b"Secret Passphrase"),
         "a3e550e89e70996c",
         "7c7ed9434ddb9c2d1e1fcc38b4bf4667",
         "e299ff9d8e4831f07e5323913c53e5f0fec3a040a211d6562fa47607244d0051",
@@ -156,8 +156,8 @@ badkey = "this key's exactly 32(∪∩∀ДЯ)...."
 @test_throws ArgumentError Encryptor("AES256", badkey)
 @test_throws ArgumentError Decryptor("AES256", badkey)
 
-iv = b"this is 16 chars"
-key = b"this key's exactly 32 bytes long"
+iv = Vector(b"this is 16 chars")
+key = Vector(b"this key's exactly 32 bytes long")
 enc = Encryptor("AES256", key)
 dec = Decryptor("AES256", key)
 shortresult = Vector{UInt8}(sizeof(plaintext) - 1)
