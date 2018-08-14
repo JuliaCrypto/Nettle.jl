@@ -6,9 +6,9 @@ struct NettleHash
     context_size::Cuint
     digest_size::Cuint
     block_size::Cuint
-    init::Ptr{Void}     # nettle_hash_init_func
-    update::Ptr{Void}   # nettle_hash_update_func
-    digest::Ptr{Void}   # nettle_hash_digest_func
+    init::Ptr{Cvoid}     # nettle_hash_init_func
+    update::Ptr{Cvoid}   # nettle_hash_update_func
+    digest::Ptr{Cvoid}   # nettle_hash_digest_func
 end
 
 # We convert from the above NettleHash to a HashType for two reasons:
@@ -21,16 +21,16 @@ struct HashType
     context_size::Cuint
     digest_size::Cuint
     block_size::Cuint
-    init::Ptr{Void}     # nettle_hash_init_func
-    update::Ptr{Void}   # nettle_hash_update_func
-    digest::Ptr{Void}   # nettle_hash_digest_func
+    init::Ptr{Cvoid}     # nettle_hash_init_func
+    update::Ptr{Cvoid}   # nettle_hash_update_func
+    digest::Ptr{Cvoid}   # nettle_hash_digest_func
 
     # This pointer member not actually in the original nettle struct
-    ptr::Ptr{Void}
+    ptr::Ptr{Cvoid}
 end
 
 # The function that maps from a NettleHash to a HashType
-function HashType(nh::NettleHash, nhptr::Ptr{Void})
+function HashType(nh::NettleHash, nhptr::Ptr{Cvoid})
     HashType( uppercase(unsafe_string(nh.name)),
                     nh.context_size, nh.digest_size, nh.block_size,
                     nh.init, nh.update, nh.digest, nhptr)
@@ -48,14 +48,14 @@ function get_hash_types()
         hash_idx = 1
         # nettle_hashes is an array of pointers ended by a NULL pointer, continue reading hash types until we hit it
         while( true )
-            nhptr = unsafe_load(cglobal(("nettle_hashes",libnettle),Ptr{Ptr{Void}}),hash_idx)
+            nhptr = unsafe_load(cglobal(("nettle_hashes",libnettle),Ptr{Ptr{Cvoid}}),hash_idx)
             if nhptr == C_NULL
                 break
             end
             hash_idx += 1
 
             nh = unsafe_load(convert(Ptr{NettleHash}, nhptr))
-            hash_type = HashType(nh, convert(Ptr{Void},nhptr))
+            hash_type = HashType(nh, convert(Ptr{Cvoid},nhptr))
             _hash_types[hash_type.name] = hash_type
         end
     end

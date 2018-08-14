@@ -1,4 +1,3 @@
-__precompile__()
 module Nettle
 using Compat
 import Compat.String

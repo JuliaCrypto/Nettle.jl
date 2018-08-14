@@ -13,10 +13,10 @@ struct NettleCipher
     context_size::Cuint
     block_size::Cuint
     key_size::Cuint
-    set_encrypt_key::Ptr{Void}
-    set_decrypt_key::Ptr{Void}
-    encrypt::Ptr{Void}
-    decrypt::Ptr{Void}
+    set_encrypt_key::Ptr{Cvoid}
+    set_decrypt_key::Ptr{Cvoid}
+    encrypt::Ptr{Cvoid}
+    decrypt::Ptr{Cvoid}
 end
 
 # For much the same reasons as in hash_common.jl, we define a separate, more "Julia friendly" type
@@ -25,10 +25,10 @@ struct CipherType
     context_size::Cuint
     block_size::Cuint
     key_size::Cuint
-    set_encrypt_key::Ptr{Void}
-    set_decrypt_key::Ptr{Void}
-    encrypt::Ptr{Void}
-    decrypt::Ptr{Void}
+    set_encrypt_key::Ptr{Cvoid}
+    set_decrypt_key::Ptr{Cvoid}
+    encrypt::Ptr{Cvoid}
+    decrypt::Ptr{Cvoid}
 end
 
 # These are the user-facing types that are used to actually {en,de}cipher stuff
@@ -60,7 +60,7 @@ function get_cipher_types()
         cipher_idx = 1
         # nettle_ciphers is an array of pointers ended by a NULL pointer, continue reading hash types until we hit it
         while( true )
-            ncptr = unsafe_load(cglobal(("nettle_ciphers",libnettle),Ptr{Ptr{Void}}),cipher_idx)
+            ncptr = unsafe_load(cglobal(("nettle_ciphers",libnettle),Ptr{Ptr{Cvoid}}),cipher_idx)
             if ncptr == C_NULL
                 break
             end
@@ -105,7 +105,7 @@ function Encryptor(name::AbstractString, key)
     end
 
     state = Vector{UInt8}(cipher_type.context_size)
-    ccall( cipher_type.set_encrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
+    ccall( cipher_type.set_encrypt_key, Cvoid, (Ptr{Cvoid}, Ptr{UInt8}), state, pointer(key))
 
     return Encryptor(cipher_type, state)
 end
@@ -123,7 +123,7 @@ function Decryptor(name::AbstractString, key)
     end
 
     state = Vector{UInt8}(cipher_type.context_size)
-    ccall( cipher_type.set_decrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
+    ccall( cipher_type.set_decrypt_key, Cvoid, (Ptr{Cvoid}, Ptr{UInt8}), state, pointer(key))
 
     return Decryptor(cipher_type, state)
 end
@@ -152,8 +152,8 @@ if c == C_NULL
 end
 # c points (:nettle_***_decrypt, nettle) may be loaded as another instance
 iiv = copy(iv)
-ccall(c, Void, (
-    Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
+ccall(c, Cvoid, (
+    Ptr{Cvoid}, Ptr{Cvoid}, Csize_t, Ptr{UInt8},
     Csize_t, Ptr{UInt8}, Ptr{UInt8}),
     state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
     sizeof(data), pointer(result), pointer(data))
@@ -171,7 +171,7 @@ function decrypt!(state::Decryptor, result, data)
     if sizeof(data) % state.cipher_type.block_size > 0
         throw(ArgumentError("Input array of length $(sizeof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
     end
-    ccall(state.cipher_type.decrypt, Void, (Ptr{Void},Csize_t,Ptr{UInt8},Ptr{UInt8}),
+    ccall(state.cipher_type.decrypt, Cvoid, (Ptr{Cvoid},Csize_t,Ptr{UInt8},Ptr{UInt8}),
         state.state, sizeof(data), pointer(result), pointer(data))
     return result
 end
@@ -212,8 +212,8 @@ if c == C_NULL
 end
 # c points (:nettle_***_encrypt, nettle) may be loaded as another instance
 iiv = copy(iv)
-ccall(c, Void, (
-    Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
+ccall(c, Cvoid, (
+    Ptr{Cvoid}, Ptr{Cvoid}, Csize_t, Ptr{UInt8},
     Csize_t, Ptr{UInt8}, Ptr{UInt8}),
     state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,
     sizeof(data), pointer(result), pointer(data))
@@ -231,7 +231,7 @@ function encrypt!(state::Encryptor, result, data)
     if sizeof(data) % state.cipher_type.block_size > 0
         throw(ArgumentError("Input array of length $(sizeof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
     end
-    ccall(state.cipher_type.encrypt, Void, (Ptr{Void},Csize_t,Ptr{UInt8},Ptr{UInt8}),
+    ccall(state.cipher_type.encrypt, Cvoid, (Ptr{Cvoid},Csize_t,Ptr{UInt8},Ptr{UInt8}),
         state.state, sizeof(data), pointer(result), pointer(data))
     return result
 end
