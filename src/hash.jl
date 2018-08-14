@@ -4,7 +4,7 @@
 import Base: show
 export Hasher, update!, digest, digest!, hexdigest!, hexdigest
 
-immutable Hasher
+struct Hasher
     hash_type::HashType
     state::Vector{UInt8}
 end

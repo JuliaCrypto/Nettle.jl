@@ -8,7 +8,7 @@ export gen_key32_iv16, add_padding_PKCS5, trim_padding_PKCS5
 export Encryptor, Decryptor, decrypt, decrypt!, encrypt, encrypt!
 
 # This is a mirror of the nettle-meta.h:nettle_cipher struct
-immutable NettleCipher
+struct NettleCipher
     name::Ptr{UInt8}
     context_size::Cuint
     block_size::Cuint
@@ -20,7 +20,7 @@ immutable NettleCipher
 end
 
 # For much the same reasons as in hash_common.jl, we define a separate, more "Julia friendly" type
-immutable CipherType
+struct CipherType
     name::AbstractString
     context_size::Cuint
     block_size::Cuint
@@ -32,11 +32,11 @@ immutable CipherType
 end
 
 # These are the user-facing types that are used to actually {en,de}cipher stuff
-immutable Encryptor
+struct Encryptor
     cipher_type::CipherType
     state::Vector{UInt8}
 end
-immutable Decryptor
+struct Decryptor
     cipher_type::CipherType
     state::Vector{UInt8}
 end
@@ -141,32 +141,23 @@ function decrypt!(state::Decryptor, e::Symbol, iv::Vector{UInt8}, result, data)
     if sizeof(iv) != state.cipher_type.block_size
         throw(ArgumentError("Iv must be $(state.cipher_type.block_size) bytes long"))
     end
-    @compat if ! (Symbol(uppercase(string(e))) in _cipher_suites)
+    if ! (Symbol(uppercase(string(e))) in _cipher_suites)
         throw(ArgumentError("now supports $(_cipher_suites) only but ':$(e)'"))
     end
-if VERSION >= v"0.4.0"
-    hdl = Libdl.dlopen_e(libnettle)
-    s = Symbol("nettle_", lowercase(string(e)), "_decrypt")
-    c = Libdl.dlsym(hdl, s)
-    if c == C_NULL
-        throw(ArgumentError("not found function '$(s)' for ':$(e)'"))
-    end
-    # c points (:nettle_***_decrypt, nettle) may be loaded as another instance
-    iiv = copy(iv)
-    ccall(c, Void, (
-        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
-        Csize_t, Ptr{UInt8}, Ptr{UInt8}),
-        state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
-        sizeof(data), pointer(result), pointer(data))
-    Libdl.dlclose(hdl)
-else
-    iiv = copy(iv)
-    ccall((:nettle_cbc_decrypt, libnettle), Void, (
-        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
-        Csize_t, Ptr{UInt8}, Ptr{UInt8}),
-        state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
-        sizeof(data), pointer(result), pointer(data))
+hdl = Libdl.dlopen_e(libnettle)
+s = Symbol("nettle_", lowercase(string(e)), "_decrypt")
+c = Libdl.dlsym(hdl, s)
+if c == C_NULL
+    throw(ArgumentError("not found function '$(s)' for ':$(e)'"))
 end
+# c points (:nettle_***_decrypt, nettle) may be loaded as another instance
+iiv = copy(iv)
+ccall(c, Void, (
+    Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
+    Csize_t, Ptr{UInt8}, Ptr{UInt8}),
+    state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
+    sizeof(data), pointer(result), pointer(data))
+Libdl.dlclose(hdl)
     return result
 end
 
@@ -210,32 +201,23 @@ function encrypt!(state::Encryptor, e::Symbol, iv::Vector{UInt8}, result, data)
     if sizeof(iv) != state.cipher_type.block_size
         throw(ArgumentError("Iv must be $(state.cipher_type.block_size) bytes long"))
     end
-    @compat if ! (Symbol(uppercase(string(e))) in _cipher_suites)
+    if ! (Symbol(uppercase(string(e))) in _cipher_suites)
         throw(ArgumentError("now supports $(_cipher_suites) only but ':$(e)'"))
     end
-if VERSION >= v"0.4.0"
-    hdl = Libdl.dlopen_e(libnettle)
-    s = Symbol("nettle_", lowercase(string(e)), "_encrypt")
-    c = Libdl.dlsym(hdl, s)
-    if c == C_NULL
-        throw(ArgumentError("not found function '$(s)' for ':$(e)'"))
-    end
-    # c points (:nettle_***_encrypt, nettle) may be loaded as another instance
-    iiv = copy(iv)
-    ccall(c, Void, (
-        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
-        Csize_t, Ptr{UInt8}, Ptr{UInt8}),
-        state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,
-        sizeof(data), pointer(result), pointer(data))
-    Libdl.dlclose(hdl)
-else
-    iiv = copy(iv)
-    ccall((:nettle_cbc_encrypt, libnettle), Void, (
-        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
-        Csize_t, Ptr{UInt8}, Ptr{UInt8}),
-        state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,
-        sizeof(data), pointer(result), pointer(data))
+hdl = Libdl.dlopen_e(libnettle)
+s = Symbol("nettle_", lowercase(string(e)), "_encrypt")
+c = Libdl.dlsym(hdl, s)
+if c == C_NULL
+    throw(ArgumentError("not found function '$(s)' for ':$(e)'"))
 end
+# c points (:nettle_***_encrypt, nettle) may be loaded as another instance
+iiv = copy(iv)
+ccall(c, Void, (
+    Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
+    Csize_t, Ptr{UInt8}, Ptr{UInt8}),
+    state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,
+    sizeof(data), pointer(result), pointer(data))
+Libdl.dlclose(hdl)
     return result
 end
 

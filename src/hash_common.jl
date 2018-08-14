@@ -1,7 +1,7 @@
 export get_hash_types
 
 # This is a mirror of the nettle-meta.h:nettle_hash struct
-immutable NettleHash
+struct NettleHash
     name::Ptr{UInt8}
     context_size::Cuint
     digest_size::Cuint
@@ -16,7 +16,7 @@ end
 #   Secondly, it's nice to convert the name from a pointer to an actual string
 # This cuts down on the amount of work we have to do for some operations
 # (especially HMAC operations) at the cost of a bit of memory.  I'll take it.
-immutable HashType
+struct HashType
     name::String
     context_size::Cuint
     digest_size::Cuint

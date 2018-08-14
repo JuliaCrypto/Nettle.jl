@@ -5,7 +5,7 @@
 import Base: show
 export HMACState, update!, digest, digest!, hexdigest!, hexdigest
 
-immutable HMACState
+struct HMACState
     hash_type::HashType
     outer::Vector{UInt8}
     inner::Vector{UInt8}
