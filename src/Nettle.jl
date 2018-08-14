@@ -1,6 +1,4 @@
 module Nettle
-using Compat
-import Compat.String
 
 # Load libnettle from our deps.jl
 const depsjl_path = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
