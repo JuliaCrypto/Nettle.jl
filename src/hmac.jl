@@ -22,9 +22,9 @@ function HMACState(name::AbstractString, key)
 
     # Construct HMACState object for this type and initialize using Nettle's init functions
     hash_type = hash_types[name]
-    outer = Vector{UInt8}(hash_type.context_size)
-    inner = Vector{UInt8}(hash_type.context_size)
-    state = Vector{UInt8}(hash_type.context_size)
+    outer = Vector{UInt8}(undef, hash_type.context_size)
+    inner = Vector{UInt8}(undef, hash_type.context_size)
+    state = Vector{UInt8}(undef, hash_type.context_size)
     ccall((:nettle_hmac_set_key,libnettle), Cvoid, (Ptr{Cvoid},Ptr{Cvoid},Ptr{Cvoid},Ptr{Cvoid},Csize_t,Ptr{UInt8}),
         outer, inner, state, hash_type.ptr, sizeof(key), key)
     return HMACState(hash_type, outer, inner, state)
@@ -37,7 +37,7 @@ function update!(state::HMACState, data)
 end
 
 function digest!(state::HMACState)
-    digest = Vector{UInt8}(state.hash_type.digest_size)
+    digest = Vector{UInt8}(undef, state.hash_type.digest_size)
     ccall((:nettle_hmac_digest,libnettle), Cvoid, (Ptr{Cvoid},Ptr{Cvoid},Ptr{Cvoid},Ptr{Cvoid}, Csize_t,
         Ptr{UInt8}), state.outer, state.inner, state.state, state.hash_type.ptr, sizeof(digest), digest)
     return digest

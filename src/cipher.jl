@@ -104,7 +104,7 @@ function Encryptor(name::AbstractString, key)
         throw(ArgumentError("Key must be $(cipher_type.key_size) bytes long"))
     end
 
-    state = Vector{UInt8}(cipher_type.context_size)
+    state = Vector{UInt8}(undef, cipher_type.context_size)
     ccall( cipher_type.set_encrypt_key, Cvoid, (Ptr{Cvoid}, Ptr{UInt8}), state, pointer(key))
 
     return Encryptor(cipher_type, state)
@@ -122,7 +122,7 @@ function Decryptor(name::AbstractString, key)
         throw(ArgumentError("Key must be $(cipher_type.key_size) bytes long"))
     end
 
-    state = Vector{UInt8}(cipher_type.context_size)
+    state = Vector{UInt8}(undef, cipher_type.context_size)
     ccall( cipher_type.set_decrypt_key, Cvoid, (Ptr{Cvoid}, Ptr{UInt8}), state, pointer(key))
 
     return Decryptor(cipher_type, state)
@@ -177,13 +177,13 @@ function decrypt!(state::Decryptor, result, data)
 end
 
 function decrypt(state::Decryptor, e::Symbol, iv::Vector{UInt8}, data)
-    result = Vector{UInt8}(sizeof(data))
+    result = Vector{UInt8}(undef, sizeof(data))
     decrypt!(state, e, iv, result, data)
     return result
 end
 
 function decrypt(state::Decryptor, data)
-    result = Vector{UInt8}(sizeof(data))
+    result = Vector{UInt8}(undef, sizeof(data))
     decrypt!(state, result, data)
     return result
 end
@@ -237,13 +237,13 @@ function encrypt!(state::Encryptor, result, data)
 end
 
 function encrypt(state::Encryptor, e::Symbol, iv::Vector{UInt8}, data)
-    result = Vector{UInt8}(sizeof(data))
+    result = Vector{UInt8}(undef, sizeof(data))
     encrypt!(state, e, iv, result, data)
     return result
 end
 
 function encrypt(state::Encryptor, data)
-    result = Vector{UInt8}(sizeof(data))
+    result = Vector{UInt8}(undef, sizeof(data))
     encrypt!(state, result, data)
     return result
 end

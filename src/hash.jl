@@ -19,7 +19,7 @@ function Hasher(name::AbstractString)
 
     # Construct Hasher object for this type and initialize using Nettle's init functions
     hash_type = hash_types[name]
-    state = Vector{UInt8}(hash_type.context_size)
+    state = Vector{UInt8}(undef, hash_type.context_size)
     ccall(hash_type.init, Cvoid, (Ptr{Cvoid},), state)
     return Hasher(hash_type, state)
 end
@@ -32,7 +32,7 @@ end
 
 # Spit out a digest of the current hash state and reset it
 function digest!(state::Hasher)
-    digest = Vector{UInt8}(state.hash_type.digest_size)
+    digest = Vector{UInt8}(undef, state.hash_type.digest_size)
     ccall(state.hash_type.digest, Cvoid, (Ptr{Cvoid},UInt32,Ptr{UInt8}), state.state, sizeof(digest), pointer(digest))
     return digest
 end
