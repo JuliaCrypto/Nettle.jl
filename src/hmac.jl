@@ -5,7 +5,7 @@
 import Base: show
 export HMACState, update!, digest, digest!, hexdigest!, hexdigest
 
-immutable HMACState
+struct HMACState
     hash_type::HashType
     outer::Vector{UInt8}
     inner::Vector{UInt8}
@@ -22,23 +22,23 @@ function HMACState(name::AbstractString, key)
 
     # Construct HMACState object for this type and initialize using Nettle's init functions
     hash_type = hash_types[name]
-    outer = Vector{UInt8}(hash_type.context_size)
-    inner = Vector{UInt8}(hash_type.context_size)
-    state = Vector{UInt8}(hash_type.context_size)
-    ccall((:nettle_hmac_set_key,libnettle), Void, (Ptr{Void},Ptr{Void},Ptr{Void},Ptr{Void},Csize_t,Ptr{UInt8}),
+    outer = Vector{UInt8}(undef, hash_type.context_size)
+    inner = Vector{UInt8}(undef, hash_type.context_size)
+    state = Vector{UInt8}(undef, hash_type.context_size)
+    ccall((:nettle_hmac_set_key,libnettle), Cvoid, (Ptr{Cvoid},Ptr{Cvoid},Ptr{Cvoid},Ptr{Cvoid},Csize_t,Ptr{UInt8}),
         outer, inner, state, hash_type.ptr, sizeof(key), key)
     return HMACState(hash_type, outer, inner, state)
 end
 
 function update!(state::HMACState, data)
-    ccall((:nettle_hmac_update,libnettle), Void, (Ptr{Void},Ptr{Void},Csize_t,Ptr{UInt8}), state.state,
+    ccall((:nettle_hmac_update,libnettle), Cvoid, (Ptr{Cvoid},Ptr{Cvoid},Csize_t,Ptr{UInt8}), state.state,
         state.hash_type.ptr, sizeof(data), data)
     return state
 end
 
 function digest!(state::HMACState)
-    digest = Vector{UInt8}(state.hash_type.digest_size)
-    ccall((:nettle_hmac_digest,libnettle), Void, (Ptr{Void},Ptr{Void},Ptr{Void},Ptr{Void}, Csize_t,
+    digest = Vector{UInt8}(undef, state.hash_type.digest_size)
+    ccall((:nettle_hmac_digest,libnettle), Cvoid, (Ptr{Cvoid},Ptr{Cvoid},Ptr{Cvoid},Ptr{Cvoid}, Csize_t,
         Ptr{UInt8}), state.outer, state.inner, state.state, state.hash_type.ptr, sizeof(digest), digest)
     return digest
 end

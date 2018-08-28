@@ -2,16 +2,25 @@ language: julia
 os:
     - osx
     - linux
+
 julia:
-    - 0.6
+    - 0.7
+    - 1.0
     - nightly
+
+# # uncomment the following lines to allow failures on nightly julia
+# # (tests will run but not make your overall status red)
+# matrix:
+#   allow_failures:
+#   - julia: 0.7
+#   - julia: 1.0
+#   - julia: nightly
+
 notifications:
     email: false
-# Avoids a Travis bug involving shallow clones
-git:
-    depth: 999999
-script:
-    - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-    - julia -e 'Pkg.clone(pwd()); Pkg.build("Nettle"); Pkg.test("Nettle"; coverage=true)'
+
 after_success:
-    - julia -e 'cd(Pkg.dir("Nettle")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
+    # submit test coverage
+    - cd ${TRAVIS_BUILD_DIR}
+    - julia -e 'using Pkg; Pkg.add("Coverage")'
+    - julia -e 'using Coverage; Coveralls.submit(Coveralls.process_folder())'

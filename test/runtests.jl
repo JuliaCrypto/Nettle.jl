@@ -1,7 +1,5 @@
 using Nettle
-using Base.Test
-using Compat
-import Compat.String
+using Test
 
 include("hash_tests.jl")
 include("hmac_tests.jl")

@@ -8,35 +8,35 @@ export gen_key32_iv16, add_padding_PKCS5, trim_padding_PKCS5
 export Encryptor, Decryptor, decrypt, decrypt!, encrypt, encrypt!
 
 # This is a mirror of the nettle-meta.h:nettle_cipher struct
-immutable NettleCipher
+struct NettleCipher
     name::Ptr{UInt8}
     context_size::Cuint
     block_size::Cuint
     key_size::Cuint
-    set_encrypt_key::Ptr{Void}
-    set_decrypt_key::Ptr{Void}
-    encrypt::Ptr{Void}
-    decrypt::Ptr{Void}
+    set_encrypt_key::Ptr{Cvoid}
+    set_decrypt_key::Ptr{Cvoid}
+    encrypt::Ptr{Cvoid}
+    decrypt::Ptr{Cvoid}
 end
 
 # For much the same reasons as in hash_common.jl, we define a separate, more "Julia friendly" type
-immutable CipherType
+struct CipherType
     name::AbstractString
     context_size::Cuint
     block_size::Cuint
     key_size::Cuint
-    set_encrypt_key::Ptr{Void}
-    set_decrypt_key::Ptr{Void}
-    encrypt::Ptr{Void}
-    decrypt::Ptr{Void}
+    set_encrypt_key::Ptr{Cvoid}
+    set_decrypt_key::Ptr{Cvoid}
+    encrypt::Ptr{Cvoid}
+    decrypt::Ptr{Cvoid}
 end
 
 # These are the user-facing types that are used to actually {en,de}cipher stuff
-immutable Encryptor
+struct Encryptor
     cipher_type::CipherType
     state::Vector{UInt8}
 end
-immutable Decryptor
+struct Decryptor
     cipher_type::CipherType
     state::Vector{UInt8}
 end
@@ -60,7 +60,7 @@ function get_cipher_types()
         cipher_idx = 1
         # nettle_ciphers is an array of pointers ended by a NULL pointer, continue reading hash types until we hit it
         while( true )
-            ncptr = unsafe_load(cglobal(("nettle_ciphers",libnettle),Ptr{Ptr{Void}}),cipher_idx)
+            ncptr = unsafe_load(cglobal(("nettle_ciphers",libnettle),Ptr{Ptr{Cvoid}}),cipher_idx)
             if ncptr == C_NULL
                 break
             end
@@ -104,8 +104,8 @@ function Encryptor(name::AbstractString, key)
         throw(ArgumentError("Key must be $(cipher_type.key_size) bytes long"))
     end
 
-    state = Vector{UInt8}(cipher_type.context_size)
-    ccall( cipher_type.set_encrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
+    state = Vector{UInt8}(undef, cipher_type.context_size)
+    ccall( cipher_type.set_encrypt_key, Cvoid, (Ptr{Cvoid}, Ptr{UInt8}), state, pointer(key))
 
     return Encryptor(cipher_type, state)
 end
@@ -122,8 +122,8 @@ function Decryptor(name::AbstractString, key)
         throw(ArgumentError("Key must be $(cipher_type.key_size) bytes long"))
     end
 
-    state = Vector{UInt8}(cipher_type.context_size)
-    ccall( cipher_type.set_decrypt_key, Void, (Ptr{Void}, Ptr{UInt8}), state, pointer(key))
+    state = Vector{UInt8}(undef, cipher_type.context_size)
+    ccall( cipher_type.set_decrypt_key, Cvoid, (Ptr{Cvoid}, Ptr{UInt8}), state, pointer(key))
 
     return Decryptor(cipher_type, state)
 end
@@ -141,32 +141,23 @@ function decrypt!(state::Decryptor, e::Symbol, iv::Vector{UInt8}, result, data)
     if sizeof(iv) != state.cipher_type.block_size
         throw(ArgumentError("Iv must be $(state.cipher_type.block_size) bytes long"))
     end
-    @compat if ! (Symbol(uppercase(string(e))) in _cipher_suites)
+    if ! (Symbol(uppercase(string(e))) in _cipher_suites)
         throw(ArgumentError("now supports $(_cipher_suites) only but ':$(e)'"))
     end
-if VERSION >= v"0.4.0"
-    hdl = Libdl.dlopen_e(libnettle)
-    s = Symbol("nettle_", lowercase(string(e)), "_decrypt")
-    c = Libdl.dlsym(hdl, s)
-    if c == C_NULL
-        throw(ArgumentError("not found function '$(s)' for ':$(e)'"))
-    end
-    # c points (:nettle_***_decrypt, nettle) may be loaded as another instance
-    iiv = copy(iv)
-    ccall(c, Void, (
-        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
-        Csize_t, Ptr{UInt8}, Ptr{UInt8}),
-        state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
-        sizeof(data), pointer(result), pointer(data))
-    Libdl.dlclose(hdl)
-else
-    iiv = copy(iv)
-    ccall((:nettle_cbc_decrypt, libnettle), Void, (
-        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
-        Csize_t, Ptr{UInt8}, Ptr{UInt8}),
-        state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
-        sizeof(data), pointer(result), pointer(data))
+hdl = Libdl.dlopen_e(libnettle)
+s = Symbol("nettle_", lowercase(string(e)), "_decrypt")
+c = Libdl.dlsym(hdl, s)
+if c == C_NULL
+    throw(ArgumentError("not found function '$(s)' for ':$(e)'"))
 end
+# c points (:nettle_***_decrypt, nettle) may be loaded as another instance
+iiv = copy(iv)
+ccall(c, Cvoid, (
+    Ptr{Cvoid}, Ptr{Cvoid}, Csize_t, Ptr{UInt8},
+    Csize_t, Ptr{UInt8}, Ptr{UInt8}),
+    state.state, state.cipher_type.decrypt, sizeof(iiv), iiv,
+    sizeof(data), pointer(result), pointer(data))
+Libdl.dlclose(hdl)
     return result
 end
 
@@ -180,19 +171,19 @@ function decrypt!(state::Decryptor, result, data)
     if sizeof(data) % state.cipher_type.block_size > 0
         throw(ArgumentError("Input array of length $(sizeof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
     end
-    ccall(state.cipher_type.decrypt, Void, (Ptr{Void},Csize_t,Ptr{UInt8},Ptr{UInt8}),
+    ccall(state.cipher_type.decrypt, Cvoid, (Ptr{Cvoid},Csize_t,Ptr{UInt8},Ptr{UInt8}),
         state.state, sizeof(data), pointer(result), pointer(data))
     return result
 end
 
 function decrypt(state::Decryptor, e::Symbol, iv::Vector{UInt8}, data)
-    result = Vector{UInt8}(sizeof(data))
+    result = Vector{UInt8}(undef, sizeof(data))
     decrypt!(state, e, iv, result, data)
     return result
 end
 
 function decrypt(state::Decryptor, data)
-    result = Vector{UInt8}(sizeof(data))
+    result = Vector{UInt8}(undef, sizeof(data))
     decrypt!(state, result, data)
     return result
 end
@@ -210,32 +201,23 @@ function encrypt!(state::Encryptor, e::Symbol, iv::Vector{UInt8}, result, data)
     if sizeof(iv) != state.cipher_type.block_size
         throw(ArgumentError("Iv must be $(state.cipher_type.block_size) bytes long"))
     end
-    @compat if ! (Symbol(uppercase(string(e))) in _cipher_suites)
+    if ! (Symbol(uppercase(string(e))) in _cipher_suites)
         throw(ArgumentError("now supports $(_cipher_suites) only but ':$(e)'"))
     end
-if VERSION >= v"0.4.0"
-    hdl = Libdl.dlopen_e(libnettle)
-    s = Symbol("nettle_", lowercase(string(e)), "_encrypt")
-    c = Libdl.dlsym(hdl, s)
-    if c == C_NULL
-        throw(ArgumentError("not found function '$(s)' for ':$(e)'"))
-    end
-    # c points (:nettle_***_encrypt, nettle) may be loaded as another instance
-    iiv = copy(iv)
-    ccall(c, Void, (
-        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
-        Csize_t, Ptr{UInt8}, Ptr{UInt8}),
-        state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,
-        sizeof(data), pointer(result), pointer(data))
-    Libdl.dlclose(hdl)
-else
-    iiv = copy(iv)
-    ccall((:nettle_cbc_encrypt, libnettle), Void, (
-        Ptr{Void}, Ptr{Void}, Csize_t, Ptr{UInt8},
-        Csize_t, Ptr{UInt8}, Ptr{UInt8}),
-        state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,
-        sizeof(data), pointer(result), pointer(data))
+hdl = Libdl.dlopen_e(libnettle)
+s = Symbol("nettle_", lowercase(string(e)), "_encrypt")
+c = Libdl.dlsym(hdl, s)
+if c == C_NULL
+    throw(ArgumentError("not found function '$(s)' for ':$(e)'"))
 end
+# c points (:nettle_***_encrypt, nettle) may be loaded as another instance
+iiv = copy(iv)
+ccall(c, Cvoid, (
+    Ptr{Cvoid}, Ptr{Cvoid}, Csize_t, Ptr{UInt8},
+    Csize_t, Ptr{UInt8}, Ptr{UInt8}),
+    state.state, state.cipher_type.encrypt, sizeof(iiv), iiv,
+    sizeof(data), pointer(result), pointer(data))
+Libdl.dlclose(hdl)
     return result
 end
 
@@ -249,19 +231,19 @@ function encrypt!(state::Encryptor, result, data)
     if sizeof(data) % state.cipher_type.block_size > 0
         throw(ArgumentError("Input array of length $(sizeof(data)) must be N times $(state.cipher_type.block_size) bytes long"))
     end
-    ccall(state.cipher_type.encrypt, Void, (Ptr{Void},Csize_t,Ptr{UInt8},Ptr{UInt8}),
+    ccall(state.cipher_type.encrypt, Cvoid, (Ptr{Cvoid},Csize_t,Ptr{UInt8},Ptr{UInt8}),
         state.state, sizeof(data), pointer(result), pointer(data))
     return result
 end
 
 function encrypt(state::Encryptor, e::Symbol, iv::Vector{UInt8}, data)
-    result = Vector{UInt8}(sizeof(data))
+    result = Vector{UInt8}(undef, sizeof(data))
     encrypt!(state, e, iv, result, data)
     return result
 end
 
 function encrypt(state::Encryptor, data)
-    result = Vector{UInt8}(sizeof(data))
+    result = Vector{UInt8}(undef, sizeof(data))
     encrypt!(state, result, data)
     return result
 end
