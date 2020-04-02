@@ -22,5 +22,4 @@ function _precompile_()
     precompile(Nettle.update!, (Nettle.HMACState, String,))
     precompile(Nettle.encrypt, (String, Vector{UInt8}, Vector{UInt8},))
     precompile(Nettle.hexdigest!, (Nettle.Hasher,))
-    precompile(Nettle.__init__, ())
 end

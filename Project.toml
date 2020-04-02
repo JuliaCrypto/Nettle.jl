@@ -1,0 +1,17 @@
+name = "Nettle"
+uuid = "49dea1ee-f6fa-5aa6-9a11-8816cee7d4b9"
+authors = ["Elliot Saba <staticfloat@gmail.com>"]
+version = "0.5.0"
+
+[deps]
+Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+Nettle_jll = "4c82536e-c426-54e4-b420-14f461c4ed8b"
+
+[compat]
+julia = "1.3"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
