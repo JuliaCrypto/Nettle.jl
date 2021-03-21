@@ -204,7 +204,7 @@ for (key,text,true_digest) in [
         "bfdc63644f0713938a7f51535c3a35e2"
     )
 ]
-    h = HMACState("sha256", key)
+    local h = HMACState("sha256", key)
     update!(h, text)
     @test hexdigest!(h) == true_digest
 end

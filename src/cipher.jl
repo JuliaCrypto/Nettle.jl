@@ -60,7 +60,7 @@ function get_cipher_types()
         cipher_idx = 1
         # nettle_ciphers is an array of pointers ended by a NULL pointer, continue reading hash types until we hit it
         while( true )
-            ncptr = unsafe_load(cglobal(("nettle_ciphers",libnettle),Ptr{Ptr{Cvoid}}),cipher_idx)
+            ncptr = unsafe_load(cglobal(("_nettle_ciphers",libnettle),Ptr{Ptr{Cvoid}}),cipher_idx)
             if ncptr == C_NULL
                 break
             end
