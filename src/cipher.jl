@@ -21,7 +21,7 @@ end
 
 # For much the same reasons as in hash_common.jl, we define a separate, more "Julia friendly" type
 struct CipherType
-    name::AbstractString
+    name::String
     context_size::Cuint
     block_size::Cuint
     key_size::Cuint
@@ -49,7 +49,7 @@ function CipherType(nc::NettleCipher)
 end
 
 # The global dictionary of hash types we know how to construct
-const _cipher_types = Dict{AbstractString,CipherType}()
+const _cipher_types = Dict{String,CipherType}()
 
 # We're going to load in each NettleCipher struct individually, deriving
 # HashAlgorithm types off of the names we find, and storing the output
@@ -88,15 +88,15 @@ function add_padding_PKCS5(data::Vector{UInt8}, block_size::Int)
 end
 
 function trim_padding_PKCS5(data::Vector{UInt8})
-  padlen = data[sizeof(data)]
+    padlen = data[end]
   if all(data[end-padlen+1:end-1] .== data[end])
-    return data[1:sizeof(data)-padlen]
+        return data[1:end-padlen]
   else
     throw(ArgumentError("Invalid PKCS5 padding"))
   end
 end
 
-function Encryptor(name::AbstractString, key)
+function Encryptor(name::String, key)
     cipher_types = get_cipher_types()
     name = uppercase(name)
     if !haskey(cipher_types, name)
@@ -114,7 +114,7 @@ function Encryptor(name::AbstractString, key)
     return Encryptor(cipher_type, state)
 end
 
-function Decryptor(name::AbstractString, key)
+function Decryptor(name::String, key)
     cipher_types = get_cipher_types()
     name = uppercase(name)
     if !haskey(cipher_types, name)
@@ -253,11 +253,11 @@ function encrypt(state::Encryptor, data)
 end
 
 # The one-shot functions that make this whole thing so easy
-decrypt(name::AbstractString, key, data) = decrypt(Decryptor(name, key), data)
-encrypt(name::AbstractString, key, data) = encrypt(Encryptor(name, key), data)
+decrypt(name::String, key, data) = decrypt(Decryptor(name, key), data)
+encrypt(name::String, key, data) = encrypt(Encryptor(name, key), data)
 
-decrypt(name::AbstractString, e::Symbol, iv::Vector{UInt8}, key, data) = decrypt(Decryptor(name, key), e, iv, data)
-encrypt(name::AbstractString, e::Symbol, iv::Vector{UInt8}, key, data) = encrypt(Encryptor(name, key), e, iv, data)
+decrypt(name::String, e::Symbol, iv::Vector{UInt8}, key, data) = decrypt(Decryptor(name, key), e, iv, data)
+encrypt(name::String, e::Symbol, iv::Vector{UInt8}, key, data) = encrypt(Encryptor(name, key), e, iv, data)
 
 # Custom show overrides make this package have a little more pizzaz!
 function show(io::IO, x::CipherType)
