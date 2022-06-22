@@ -183,4 +183,6 @@ longiv = Vector{UInt8}(undef, sizeof(iv) + 1)
 @test_throws ArgumentError encrypt!(enc, :UNKNOWN, iv, result, plaintext)
 @test_throws ArgumentError decrypt!(dec, :UNKNOWN, iv, result, plaintext)
 
+@test_throws ArgumentError trim_padding_PKCS5(UInt8[0x01, 0x03, 0x0a, 0x03, 0x03, 0x02, 0x03])
+
 println("Cipher AES256CBC OK.")
