@@ -89,7 +89,7 @@ end
 
 function trim_padding_PKCS5(data::Vector{UInt8})
   padlen = data[sizeof(data)]
-  if all(data[end-padlen+1:end] .== data[end])
+  if all(data[end-padlen+1:end-1] .== data[end])
     return data[1:sizeof(data)-padlen]
   else
     throw(ArgumentError("Invalid PKCS5 padding"))
