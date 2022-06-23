@@ -83,17 +83,17 @@ function gen_key32_iv16(pw::Vector{UInt8}, salt::Vector{UInt8})
 end
 
 function add_padding_PKCS5(data::Vector{UInt8}, block_size::Int)
-  padlen = block_size - (sizeof(data) % block_size)
-  return [data; map(i -> UInt8(padlen), 1:padlen)]
+    padlen = block_size - (sizeof(data) % block_size)
+    return [data; map(i -> UInt8(padlen), 1:padlen)]
 end
 
 function trim_padding_PKCS5(data::Vector{UInt8})
     padlen = data[end]
-  if all(data[end-padlen+1:end-1] .== data[end])
+    if all(data[end-padlen+1:end-1] .== data[end])
         return data[1:end-padlen]
-  else
-    throw(ArgumentError("Invalid PKCS5 padding"))
-  end
+    else
+        throw(ArgumentError("Invalid PKCS5 padding"))
+    end
 end
 
 function Encryptor(name::String, key)
