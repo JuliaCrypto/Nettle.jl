@@ -13,7 +13,7 @@ struct HMACState
 end
 
 # Constructor for HMACState
-function HMACState(name::AbstractString, key)
+function HMACState(name::String, key)
     hash_types = get_hash_types()
     name = uppercase(name)
     if !haskey(hash_types, name)
@@ -47,7 +47,7 @@ end
 hexdigest!(state::HMACState) = bytes2hex(digest!(state))
 
 # The one-shot functions that makes this whole thing so easy
-digest(hmac_name::AbstractString, key, data) = digest!(update!(HMACState(hmac_name, key), data))
-hexdigest(hmac_name::AbstractString, key, data) = hexdigest!(update!(HMACState(hmac_name, key), data))
+digest(hmac_name::String, key, data) = digest!(update!(HMACState(hmac_name, key), data))
+hexdigest(hmac_name::String, key, data) = hexdigest!(update!(HMACState(hmac_name, key), data))
 
 show(io::IO, x::HMACState) = write(io, "$(x.hash_type.name) HMAC state")

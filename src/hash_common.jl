@@ -37,7 +37,7 @@ function HashType(nh::NettleHash, nhptr::Ptr{Cvoid})
 end
 
 # The global dictionary of hash types we know how to construct
-const _hash_types = Dict{AbstractString,HashType}()
+const _hash_types = Dict{String,HashType}()
 
 # We're going to load in each NettleHash struct individually, deriving
 # HashAlgorithm types off of the names we find, and storing the output

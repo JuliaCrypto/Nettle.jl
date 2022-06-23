@@ -10,7 +10,7 @@ struct Hasher
 end
 
 # Constructor for Hasher
-function Hasher(name::AbstractString)
+function Hasher(name::String)
     hash_types = get_hash_types()
     name = uppercase(name)
     if !haskey(hash_types, name)
@@ -41,10 +41,10 @@ end
 hexdigest!(state::Hasher) = bytes2hex(digest!(state))
 
 # The one-shot functions that makes this whole thing so easy.
-digest(hash_name::AbstractString, data) = digest!(update!(Hasher(hash_name), data))
-digest(hash_name::AbstractString, io::IO) = digest(hash_name, readall(io))
-hexdigest(hash_name::AbstractString, data) = hexdigest!(update!(Hasher(hash_name), data))
-hexdigest(hash_name::AbstractString, io::IO) = hexdigest(hash_name, readall(io))
+digest(hash_name::String, data) = digest!(update!(Hasher(hash_name), data))
+digest(hash_name::String, io::IO) = digest(hash_name, readall(io))
+hexdigest(hash_name::String, data) = hexdigest!(update!(Hasher(hash_name), data))
+hexdigest(hash_name::String, io::IO) = hexdigest(hash_name, readall(io))
 
 # Custom show overrides make this package have a little more pizzaz!
 function show(io::IO, x::HashType)
