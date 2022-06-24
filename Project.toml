@@ -1,7 +1,7 @@
 name = "Nettle"
 uuid = "49dea1ee-f6fa-5aa6-9a11-8816cee7d4b9"
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
-version = "0.5.2"
+version = "1.0.0"
 
 [deps]
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
